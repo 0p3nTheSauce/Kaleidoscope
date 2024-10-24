@@ -10,10 +10,11 @@ def mir(A):
   return E
 
 def mir2(A):
-  # C = A.T
-  D = np.flip(A, 0)
-  E = np.flip(D, 1)
-  return E
+  C = A.T
+  # D = np.flip(A, 0)
+  # E = np.flip(D, 1)
+  # C = E.T
+  return C
 
 def mir_diag(m, d):
   if d == 1:
@@ -70,7 +71,17 @@ if __name__ == '__main__':
               [7, 8, 9]])
 
   print("Z\n", Z)
-  print("mir(Z)\n", mir(Z))
+  
+  # W = Z.T
+  # print("transpose of Z\n", W)
+  
+  # Y = np.flip(W, 0)
+  # print("0(vertical) flip\n", Y)
+  
+  # X = np.flip(Y, 1)
+  # print("1(horizontal) flip\n", X)
+  
+  # print("mir(Z)\n", mir(Z))
 
 
 
