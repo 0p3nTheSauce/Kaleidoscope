@@ -11,7 +11,7 @@ def rotate(img, angle):
   return rotated
   
 def spin_det(img):
-  h, w, _ = img.shape
+  #Image deteriorates with mumtiple rotations
   for i in range(100):
     img = rotate(img, 10)
     cv2.imshow('Rotated', img)
@@ -19,7 +19,6 @@ def spin_det(img):
   cv2.destroyAllWindows()
   
 def spin(img):
-  h, w, _ = img.shape
   for i in range(0, 1000, 10):
     rot = rotate(img,i)
     cv2.imshow('Rotated', rot)
@@ -27,7 +26,6 @@ def spin(img):
   cv2.destroyAllWindows()
   
 def color_wheel(img):
-  h, w, _ = img.shape
   for i in range(0, 1000, 10):
     rot = rotate(img,i)
     chan = color_change2(rot)
@@ -84,7 +82,6 @@ def color_change2(img):
   return color
   
 def color_wheel2(img):
-  h, w, _ = img.shape
   for i in range(0, 1000, 10):
     rot = rotate(img,i)
     chan = color_change2(rot)
@@ -96,23 +93,38 @@ def color_wheel2(img):
   cv2.destroyAllWindows()
   
 
-def disk(img ,center, radius):
+def disk(img):
+  h, w, _ = img.shape
+  center = (w//2, h//2)
+  l = [h, w]
+  radius = min(l)//2
   mask_img = np.zeros_like(img)
   mask = np.zeros(img.shape[:2], dtype=np.uint8)
   cv2.circle(mask ,center, radius, (255), thickness=-1)
   mask_img[mask == 255] = img[mask == 255]
   return mask_img
   
+def spin_func(img, func, params=None, iter=1000, deg=10, time=50):
+  for i in range(0, iter, deg):
+    rot = rotate(img,i)
+    if params is not None:
+      rot = func(rot, *params)
+    else:
+      rot = func(rot)
+    cv2.imshow('Rotated', rot)
+    key = cv2.waitKey(time)
+    if key == 27:
+      break
+  cv2.destroyAllWindows()
+  
   
 def main():
   img = cv2.imread('me.jpg')
   cv2.imshow('Original', img)
   cv2.waitKey(0)
-  h, w, _ = img.shape
-  l = [h, w]
-  min_dim = min(l)
+
   # gen_pattern(img)
-  track = disk(img, (w//2, h//2), min_dim//2)
+  track = disk(img)
   cv2.imshow('Track', track)
   cv2.waitKey(0)
   #spin(img)
