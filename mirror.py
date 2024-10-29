@@ -307,7 +307,8 @@ def text_img(img, text, disp=False ,color=(0, 255, 0)):
 
 
 def main():
-  img = cv2.imread('mario.jpg')
+  out = 'spiral'
+  img = cv2.imread(f'{out}.jpg')
   img = crop_square(img)
   img = cv2.resize(img, (500, 500))
   cv2.imshow('Original', img)
@@ -339,8 +340,7 @@ def main():
   # cv2.waitKey(0)
   
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
-  out = 'trippy'
-  #spin_func(img, multi_mirror, time=10, deg=1,outfolder=out) #very cool
+  spin_func(img, multi_mirror, time=10, deg=1,outfolder=out) #very cool
   makevideo(out)
   #edgey(img ,time=20)
   
