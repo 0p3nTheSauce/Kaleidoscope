@@ -7,6 +7,7 @@ import statistics
 #local
 from mat import mir, mir2
 from rot import spin_func, disk
+from sharpen_blur import makevideo
 
 def crop_square(img):
   h, w, _ = img.shape
@@ -306,11 +307,13 @@ def text_img(img, text, disp=False ,color=(0, 255, 0)):
 
 
 def main():
-  img = cv2.imread('me.jpg')
+  img = cv2.imread('mario.jpg')
   img = crop_square(img)
   img = cv2.resize(img, (500, 500))
   cv2.imshow('Original', img)
   cv2.waitKey(0)
+  
+  
   
   # diags = make_diag_p(img)
   # nodiags = remove_diag_p(diags)
@@ -336,9 +339,9 @@ def main():
   # cv2.waitKey(0)
   
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
-  
-  spin_func(img, multi_mirror, time=30) #very cool
-  
+  out = 'trippy'
+  #spin_func(img, multi_mirror, time=10, deg=1,outfolder=out) #very cool
+  makevideo(out)
   #edgey(img ,time=20)
   
   

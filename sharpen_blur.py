@@ -1,23 +1,32 @@
 #!/usr/bin/env python3
 
 import cv2
-import glob
 import numpy as np
+import os
 
-
-def makevideo(path, fr = 10.0, ):
-  out_path = f'{path}.avi'
+def makevideo(path, fr = 30.0, ):
+  # out_path = f'{path}.avi'
+  out_path = f'{path}.mp4'
   
-  images = sorted(glob.glob(f"{path}/*.JPG"))
-  frame = cv2.imread(images[0])
+  #images = sorted(glob.glob(f"{path}/*.jpg"))
+  images = [img for img in os.listdir(path) if img.endswith('.jpg')]
+  images.sort(key=lambda x: int(x.split('.')[0]))
+  # images = sorted(glob.glob(f"{path}/*.jpg"))
+  frame = cv2.imread(os.path.join(path, images[0]))
   h, w, c = frame.shape
   size = (w, h)
   
-  fourcc = cv2.VideoWriter_fourcc(*'XVID') 
+  # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+  fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
   writer = cv2.VideoWriter(out_path, fourcc, fr, size)  
   
   for img in images:
-    frame = cv2.imread(img)
+    img_path = os.path.join(path, img)
+    frame = cv2.imread(img_path)
+    # cv2.imshow('image', frame)
+    # key = cv2.waitKey(30)
+    # if key == 27:
+    #   break
     writer.write(frame)
   
   writer.release()
