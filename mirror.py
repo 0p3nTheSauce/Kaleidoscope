@@ -110,7 +110,7 @@ def make_diag_p(img, color=(0,255,0)):
   cp = img.copy()
   for rows in range(h):
     for columns in range(w):
-      if (h-rows) == columns:
+      if (h-1-rows) == columns:
         cp[rows, columns] = color
   cv2.imshow('diag', cp)
   cv2.waitKey(0)
@@ -132,6 +132,17 @@ def neighbours_n(img, coords):
        img[y+1, x-1], img[y+1, x], img[y+1, x+1]]
   return l
 
+
+
+# def neighbours_p(img, coords):
+#   #gets the neighbouring pixel values 
+#   #used by remove_diag_p
+#   x, y = coords
+#   l = [img[x-1, y-1], img[x-1, y], img[x-1, y+1],
+#        img[x, y-1], img[x, y], img[x, y+1],
+#        img[x+1, y-1], img[x+1, y], img[x+1, y+1]]
+#   return l
+            
 def neighbours_p(img, coords):
   #gets the neighbouring pixel values 
   #used by remove_diag_p
@@ -139,7 +150,7 @@ def neighbours_p(img, coords):
   l = [img[x-1, y-1], img[x-1, y], img[x-1, y+1],
        img[x, y-1], img[x, y], img[x, y+1],
        img[x+1, y-1], img[x+1, y], img[x+1, y+1]]
-  return l
+  return l 
             
 def remove_diag_n(img, disp=False):
   #removes diagnol lines (negative gradient) by taking the median 
@@ -164,7 +175,7 @@ def remove_diag_p(img, disp=False):
   cp = img.copy()
   for rows in range(1, h-1):
     for cols in range(1, w-1):
-      if (h-rows) == cols:
+      if (h-rows-1) == cols:
         k = neighbours_p(img, (rows, cols))
         med = med_of(k)
         cp[rows, cols] = med
@@ -312,13 +323,13 @@ def main():
   # cv2.imshow('thresh', thresh)
   # cv2.waitKey(0)
   
-  hm = half_mirror(img, 'tp', disp=True)
-  cv2.imshow('Half Mirror', hm)
-  cv2.waitKey(0)
-  nodiags = remove_diag_p(hm, disp=True)
-  mad = make_diag_p(nodiags)
-  cv2.destroyAllWindows()
-  nodiags = remove_diag_p(mad, disp=True)
+  # hm = half_mirror(img, 'tp', disp=True)
+  # cv2.imshow('Half Mirror', hm)
+  # cv2.waitKey(0)
+  # nodiags = remove_diag_p(hm, disp=True)
+  # mad = make_diag_p(nodiags)
+  # cv2.destroyAllWindows()
+  # nodiags = remove_diag_p(mad, disp=True)
   
   # track = disk(img)
   # cv2.imshow('Track', track)
@@ -326,7 +337,7 @@ def main():
   
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
   
-  #spin_func(img, multi_mirror, time=30) #very cool
+  spin_func(img, multi_mirror, time=30) #very cool
   
   #edgey(img ,time=20)
   
