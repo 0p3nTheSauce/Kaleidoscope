@@ -35,7 +35,8 @@ def mirror(img, line):
     print("Invalid line in mirror")
     sys.exit(1)
 
-def blackout(img, line, remove_diag=True):
+def blackout(img, line):
+  #blacks out half an image
   # sqr = crop_square(img)
   h, w, _ = img.shape
   bl = img.copy()
@@ -86,31 +87,95 @@ def blackout(img, line, remove_diag=True):
 
 def med_of(k):
   #get median tuple in kernel
+  #used to remove diagnols
   t = list(zip(*k))
   med = tuple(statistics.median(dim) for dim in t)
   return med
 
-def remove_diags(img, ml):
-  #remove the diagnol lines that form in half mirror
-  rmd = img.copy()
-  if ml == 'p':
-    m, c = 1, 0
-  elif ml == 'n':
-    m, c = -1, 0
-  else:
-    print("Invalid ml in remove diags")
-    sys.exit(1)
+def make_diag_n(img, color=(0, 255, 0)):
+  #make diagnol line (negative gradient)
   h, w, _ = img.shape
-  for y in range(1, h-1):
-    for x in range(1, w-1):
-      if y == m * x + c:
-        lb = [img[y-1, x-1], img[y-1, x], img[y-1, x+1], img[y, x-1], img[y, x+1], img[y+1, x-1], img[y+1, x], img[y+1, x+1]] #3x3 kernel
-        rmd[y, x] = med_of(lb)
-  return rmd
+  cp = img.copy()
+  for rows in range(h):
+    for columns in range(w):
+      if rows == columns:
+        cp[rows, columns] = color
+  cv2.imshow('diag', cp)
+  cv2.waitKey(0)
+  return cp
+
+def make_diag_p(img, color=(0,255,0)):
+  #make diagnol line (negative gradient)
+  h, w, _ = img.shape
+  cp = img.copy()
+  for rows in range(h):
+    for columns in range(w):
+      if (h-rows) == columns:
+        cp[rows, columns] = color
+  cv2.imshow('diag', cp)
+  cv2.waitKey(0)
+  return cp
+
+# def neighbours(img, coords):
+#   x, y = coords
+#   l = [img[y-1, x-1], img[y-1, x], img[y-1, x+1],
+#        img[y, x-1], img[y, x], img[y, x+1],
+#        img[y+1, x-1], img[y+1, x], img[y+1, x+1]]
+#   return l
+
+def neighbours_n(img, coords):
+  #gets the neighbouring pixel values 
+  #used by remove_diag_n
+  x, y = coords
+  l = [img[y-1, x-1], img[y-1, x], img[y-1, x+1],
+       img[y, x-1], img[y, x], img[y, x+1],
+       img[y+1, x-1], img[y+1, x], img[y+1, x+1]]
+  return l
+
+def neighbours_p(img, coords):
+  #gets the neighbouring pixel values 
+  #used by remove_diag_p
+  x, y = coords
+  l = [img[x-1, y-1], img[x-1, y], img[x-1, y+1],
+       img[x, y-1], img[x, y], img[x, y+1],
+       img[x+1, y-1], img[x+1, y], img[x+1, y+1]]
+  return l
             
+def remove_diag_n(img, disp=False):
+  #removes diagnol lines (negative gradient) by taking the median 
+  # of the neighbouring pixels
+  h, w, _ = img.shape
+  cp = img.copy()
+  for rows in range(1, h-1):
+    for cols in range(1, w-1):
+      if rows == cols:
+        k = neighbours_n(img, (rows, cols))
+        med = med_of(k)
+        cp[rows, cols] = med
+  if disp:
+    cv2.imshow('no diags', cp)
+    cv2.waitKey(0)
+  return cp
+  
+def remove_diag_p(img, disp=False):
+  #removes diagnol lines (positive gradient) by taking the median 
+  # of the neighbouring pixels
+  h, w, _ = img.shape
+  cp = img.copy()
+  for rows in range(1, h-1):
+    for cols in range(1, w-1):
+      if (h-rows) == cols:
+        k = neighbours_p(img, (rows, cols))
+        med = med_of(k)
+        cp[rows, cols] = med
+  if disp:
+    cv2.imshow('no diags', cp)
+    cv2.waitKey(0)
+  return cp
 
 
 def half_mirror(img, line, disp=False):
+  #mirrors half the image onto the other half
   sqr = crop_square(img)
   bl = blackout(sqr, line)
   ml = line[1]
@@ -124,6 +189,10 @@ def half_mirror(img, line, disp=False):
     cv2.imshow('Mirror', mr)
     cv2.waitKey(0)
   w = cv2.addWeighted(bl, 1.0, mr, 1.0, 0)
+  if ml == 'p':
+    w = remove_diag_p(w)
+  elif ml == 'n':
+    w = remove_diag_n(w)
   return w
 
 
@@ -227,21 +296,37 @@ def text_img(img, text, disp=False ,color=(0, 255, 0)):
 
 def main():
   img = cv2.imread('me.jpg')
+  img = crop_square(img)
+  img = cv2.resize(img, (500, 500))
   cv2.imshow('Original', img)
   cv2.waitKey(0)
+  
+  # diags = make_diag_p(img)
+  # nodiags = remove_diag_p(diags)
 
+  # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+  # cv2.imshow('gray', gray)
+  # cv2.waitKey(0)
+  
+  # _, thresh = cv2.threshold(img, 150, 200, cv2.THRESH_BINARY)
+  # cv2.imshow('thresh', thresh)
+  # cv2.waitKey(0)
+  
   hm = half_mirror(img, 'tp', disp=True)
   cv2.imshow('Half Mirror', hm)
   cv2.waitKey(0)
+  nodiags = remove_diag_p(hm, disp=True)
+  mad = make_diag_p(nodiags)
+  cv2.destroyAllWindows()
+  nodiags = remove_diag_p(mad, disp=True)
   
-  
-  track = disk(img)
-  cv2.imshow('Track', track)
-  cv2.waitKey(0)
+  # track = disk(img)
+  # cv2.imshow('Track', track)
+  # cv2.waitKey(0)
   
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
   
-  #spin_func(img, multi_mirror) #very cool
+  #spin_func(img, multi_mirror, time=30) #very cool
   
   #edgey(img ,time=20)
   
