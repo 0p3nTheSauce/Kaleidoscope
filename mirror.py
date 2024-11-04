@@ -307,10 +307,10 @@ def text_img(img, text, disp=False ,color=(0, 255, 0)):
 
 
 def main():
-  out = 'spiral'
+  out = 'mush'
   img = cv2.imread(f'{out}.jpg')
   img = crop_square(img)
-  img = cv2.resize(img, (500, 500))
+  # img = cv2.resize(img, (500, 500))
   cv2.imshow('Original', img)
   cv2.waitKey(0)
   
