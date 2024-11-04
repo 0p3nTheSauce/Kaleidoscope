@@ -17,8 +17,10 @@ def makevideo(path, fr = 30.0, ):
   size = (w, h)
   
   # fourcc = cv2.VideoWriter_fourcc(*'XVID')
-  fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
-  writer = cv2.VideoWriter(out_path, fourcc, fr, size)  
+  fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
+  # fourcc = cv2.VideoWriter_fourcc(*'H264')
+  # fourcc = cv2.VideoWriter_fourcc(*'avc1')
+  writer = cv2.VideoWriter(out_path, fourcc, fr, size)
   
   for img in images:
     img_path = os.path.join(path, img)

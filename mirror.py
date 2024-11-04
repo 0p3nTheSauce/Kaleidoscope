@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import random
 import statistics
+import sys
 #local
 from mat import mir, mir2
 from rot import spin_func, disk
@@ -12,8 +13,14 @@ from sharpen_blur import makevideo
 def crop_square(img):
   h, w, _ = img.shape
   if h > w:
-    return img[:w, :]
-  return img[:, :h]
+    diff = h - w
+    dif1 = diff//2
+    dif2 = diff-dif1
+    return img[dif1:h-dif2, :]
+  diff = w - h
+  dif1 = diff//2
+  dif2 = diff-dif1
+  return img[:, dif1:w-dif2]
 
 def mirror(img, line):
   if line == 'v':
@@ -117,13 +124,6 @@ def make_diag_p(img, color=(0,255,0)):
   cv2.waitKey(0)
   return cp
 
-# def neighbours(img, coords):
-#   x, y = coords
-#   l = [img[y-1, x-1], img[y-1, x], img[y-1, x+1],
-#        img[y, x-1], img[y, x], img[y, x+1],
-#        img[y+1, x-1], img[y+1, x], img[y+1, x+1]]
-#   return l
-
 def neighbours_n(img, coords):
   #gets the neighbouring pixel values 
   #used by remove_diag_n
@@ -132,17 +132,6 @@ def neighbours_n(img, coords):
        img[y, x-1], img[y, x], img[y, x+1],
        img[y+1, x-1], img[y+1, x], img[y+1, x+1]]
   return l
-
-
-
-# def neighbours_p(img, coords):
-#   #gets the neighbouring pixel values 
-#   #used by remove_diag_p
-#   x, y = coords
-#   l = [img[x-1, y-1], img[x-1, y], img[x-1, y+1],
-#        img[x, y-1], img[x, y], img[x, y+1],
-#        img[x+1, y-1], img[x+1, y], img[x+1, y+1]]
-#   return l
             
 def neighbours_p(img, coords):
   #gets the neighbouring pixel values 
@@ -307,11 +296,17 @@ def text_img(img, text, disp=False ,color=(0, 255, 0)):
 
 
 def main():
-  out = 'mush'
+  if len(sys.argv) == 0:
+    out = 'mush'
+  else:
+    out = sys.argv[1]
+  print(f'{out}.jpg')
   img = cv2.imread(f'{out}.jpg')
+  cv2.imshow('Original', img)
+  cv2.waitKey(0)
   img = crop_square(img)
   # img = cv2.resize(img, (500, 500))
-  cv2.imshow('Original', img)
+  cv2.imshow('Crop squared: ', img)
   cv2.waitKey(0)
   
   
@@ -340,7 +335,7 @@ def main():
   # cv2.waitKey(0)
   
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
-  spin_func(img, multi_mirror, time=10, deg=1,outfolder=out) #very cool
+  #spin_func(img, multi_mirror, time=10, deg=1,outfolder=out) #very cool
   makevideo(out)
   #edgey(img ,time=20)
   
