@@ -8,7 +8,7 @@ import sys
 #local
 from mat import mir, mir2
 from rot import spin_func, disk
-from sharpen_blur import makevideo
+from videos import makeVideo
 
 def crop_square(img):
   h, w, _ = img.shape
@@ -310,33 +310,10 @@ def main():
   cv2.waitKey(0)
   
   
-  
-  # diags = make_diag_p(img)
-  # nodiags = remove_diag_p(diags)
-
-  # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  # cv2.imshow('gray', gray)
-  # cv2.waitKey(0)
-  
-  # _, thresh = cv2.threshold(img, 150, 200, cv2.THRESH_BINARY)
-  # cv2.imshow('thresh', thresh)
-  # cv2.waitKey(0)
-  
-  # hm = half_mirror(img, 'tp', disp=True)
-  # cv2.imshow('Half Mirror', hm)
-  # cv2.waitKey(0)
-  # nodiags = remove_diag_p(hm, disp=True)
-  # mad = make_diag_p(nodiags)
-  # cv2.destroyAllWindows()
-  # nodiags = remove_diag_p(mad, disp=True)
-  
-  # track = disk(img)
-  # cv2.imshow('Track', track)
-  # cv2.waitKey(0)
-  
+ 
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
-  #spin_func(img, multi_mirror, time=10, deg=1,outfolder=out) #very cool
-  makevideo(out)
+  spin_func(img, multi_mirror, time=10, outfolder=out) #very cool
+  makeVideo(out)
   #edgey(img ,time=20)
   
   
