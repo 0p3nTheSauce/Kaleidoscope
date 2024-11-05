@@ -295,9 +295,12 @@ def text_img(img, text, disp=False ,color=(0, 255, 0)):
 
 
 
+def ident(img):
+  return img
+
 def main():
-  if len(sys.argv) == 0:
-    out = 'mush'
+  if len(sys.argv) == 1:
+    out = 'src_imgs/landscape'
   else:
     out = sys.argv[1]
   print(f'{out}.jpg')
@@ -305,15 +308,17 @@ def main():
   cv2.imshow('Original', img)
   cv2.waitKey(0)
   img = crop_square(img)
-  # img = cv2.resize(img, (500, 500))
+  img = cv2.resize(img, (500, 500))
   cv2.imshow('Crop squared: ', img)
   cv2.waitKey(0)
   
   
  
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
-  spin_func(img, multi_mirror, time=10, outfolder=out) #very cool
-  makeVideo(out)
+  #spin_func(img, multi_mirror, time=1, outfolder=out) #very cool
+  spin_func(img, multi_mirror, time=1)
+  #spin_func(img, ident, time=1)
+  #makeVideo(out)
   #edgey(img ,time=20)
   
   
