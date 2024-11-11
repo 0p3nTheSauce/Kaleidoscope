@@ -14,13 +14,15 @@ def mir(A):
   C = A.T
   D = C[::-1, :]  # Flip vertically (equivalent to np.flip(C, 0))
   E = D[:, ::-1] # Flip horizontally (equivalent to np.flip(D, 1))
+  return E
 
 
+# def mir2(A):
+#   C = A.T
+#   return C
+@njit
 def mir2(A):
   C = A.T
-  # D = np.flip(A, 0)
-  # E = np.flip(D, 1)
-  # C = E.T
   return C
 
 def mir_diag(m, d):
