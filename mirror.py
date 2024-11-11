@@ -5,6 +5,7 @@ import sys
 import random
 import statistics
 import sys
+from numba import njit
 #local
 from mat import mir, mir2
 from rot import spin_func, disk
@@ -43,7 +44,7 @@ def mirror(img, line):
     print("Invalid line in mirror")
     sys.exit(1)
 
-def blackout(img, line):
+def blackout_original(img, line):
   #blacks out half an image
   # sqr = crop_square(img)
   h, w, _ = img.shape
@@ -80,10 +81,6 @@ def blackout(img, line):
   for y in range(h):
     for x in range(w):
       yl = m * x + c
-      # if remove_diag and y == yl:
-      #   (b, g, r) = bl[y, x]
-      #   bl[y, x] = (0, 0, 0)
-      #   print('removed diag')
       if o == 'b':
         if y <= yl:
           bl[x, y] = (0, 0, 0)
@@ -92,6 +89,49 @@ def blackout(img, line):
           bl[x, y] = (0, 0, 0)  
   return bl
 
+@njit(cache=True)
+def blackout_1chan(img, line_code):
+  h, w = img.shape
+  bl = img.copy()
+  b, t = 1, 0
+  match line_code:
+    case 0: # top vertical
+      bl[h // 2:, :] = 0
+    case 1: # bottom vertical
+      bl[:h // 2, :] = 0
+    case 2: # left horizontal
+      bl[:, w // 2:] = 0
+    case 3: # right horizontal 
+      bl[:, :w // 2] = 0
+    case 4: # bottom positive slope
+      m, c, o = 1, h, b
+    case 5: # top positive slope
+      m, c, o = 1, 0, t
+    case 6: # bottom negative slope
+      m, c, o = -1, h, t
+    case 7: # top negative slope
+      m, c, o = -1, h, b
+    case _:
+      raise ValueError("Invalid line code")
+
+  #handle diagonal lines
+  if line_code >= 4:
+    c = h - c
+    m = -m
+    for y in range(h):
+      for x in range(w):
+        yl = m * x + c
+        if (o == b and y <= yl) or (o == t and y >= yl):
+          bl[x, y] = 0
+          
+  return bl
+
+def blackout(img, line):
+  b, g, r = cv2.split(img)
+  b = blackout_1chan(b, line)
+  g = blackout_1chan(g, line)
+  r = blackout_1chan(r, line)
+  return cv2.merge((b, g, r))
 
 def med_of(k):
   #get median tuple in kernel
