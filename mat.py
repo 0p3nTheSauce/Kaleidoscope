@@ -3,38 +3,39 @@ import sys
 from numba import njit
 
 
-def mir_original(A):
+def mir_p_original(A):
   C = A.T
   D = np.flip(C, 0)
   E = np.flip(D, 1)
   return E
 
+def mir_n_original(A):
+  C = A.T
+  return C
+
+
+
 @njit(cache=True)
-def mir(A):
+def mir_p(A): #positive diagonal
   C = A.T
   D = C[::-1, :]  # Flip vertically (equivalent to np.flip(C, 0))
   E = D[:, ::-1] # Flip horizontally (equivalent to np.flip(D, 1))
   return E
 
-
-def mir2_original(A):
-  C = A.T
-  return C
-
 @njit(cache=True)
-def mir2(A):
+def mir_n(A): #negative diagonal
   C = A.T
   return C
 
-def mir_diag(m, d):
-  if d == 1:
-    return mir(m)
-  elif d == -1:
-    return mir2(m)
-  else:
-    #error
-    print("invalid diagonal")
-    sys.exit(1)
+# def mir_diag(m, d):
+#   if d == 1:
+#     return mir(m)
+#   elif d == -1:
+#     return mir2(m)
+#   else:
+#     #error
+#     print("invalid diagonal")
+#     sys.exit(1)
 
 
 
@@ -74,7 +75,7 @@ if __name__ == '__main__':
 
   print("B\n", B)
     
-  print("mir(B)\n", mir(B))
+  print("mir(B)\n", mir_p(B))
 
   Z = np.array([[1, 2, 3],
               [4, 5, 6],
@@ -96,4 +97,4 @@ if __name__ == '__main__':
 
 
     
-  print("mir2(Z)\n", mir2(Z))
+  print("mir2(Z)\n", mir_n(Z))

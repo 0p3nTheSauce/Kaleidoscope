@@ -7,7 +7,7 @@ import statistics
 import sys
 from numba import njit
 #local
-from mat import mir, mir2
+from mat import mir_p, mir_n
 from rot import spin_func, disk
 from videos import makeVideo
 
@@ -30,15 +30,15 @@ def mirror(img, line):
     return cv2.flip(img, 1)
   elif line == 'p': #positive incline diagonal
     b, g, r = cv2.split(img)
-    b = mir(b)
-    g = mir(g)
-    r = mir(r)
+    b = mir_p(b)
+    g = mir_p(g)
+    r = mir_p(r)
     return cv2.merge((b, g, r))
   elif line == 'n':#negative incline diagonal
     b, g, r = cv2.split(img)
-    b = mir2(b)
-    g = mir2(g)
-    r = mir2(r)
+    b = mir_n(b)
+    g = mir_n(g)
+    r = mir_n(r)
     return cv2.merge((b, g, r))
   else:
     print("Invalid line in mirror")

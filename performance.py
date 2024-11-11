@@ -2,31 +2,31 @@ import timeit
 import cv2
 import numpy as np
 #local imports
-from mat import mir, mir2, mir_original, mir2_original, mir_diag
+from mat import mir_p, mir_n, mir_p_original, mir_n_original
 from mirror import crop_square, blackout_original, blackout
 
 
 def test_mirs_img(img):
   
   #original functions
-  o_mir = mir_original(img)
-  o_mir2 = mir2_original(img)
-  cv2.imshow('Original mir', o_mir)
-  cv2.imshow('Original mir2', o_mir2)
+  o_mir_p = mir_p_original(img)
+  o_mir_n = mir_n_original(img)
+  cv2.imshow('Original mir', o_mir_p)
+  cv2.imshow('Original mir2', o_mir_n)
   cv2.waitKey(0)
-  o_mir_time = timeit.timeit(lambda: mir_original(img), number=100)
-  o_mir2_time = timeit.timeit(lambda: mir2_original(img), number=100)
-  print(f"Original mir time: {o_mir_time}")
-  print(f"Original mir2 time: {o_mir2_time}")
+  o_mir_p_time = timeit.timeit(lambda: mir_p_original(img), number=100)
+  o_mir_n_time = timeit.timeit(lambda: mir_n_original(img), number=100)
+  print(f"Original mir time: {o_mir_p_time}")
+  print(f"Original mir2 time: {o_mir_n_time}")
   
   #optimized functions
-  mir_img = mir(img)
-  mir2_img = mir2(img)
+  mir_img = mir_p(img)
+  mir2_img = mir_n(img)
   cv2.imshow('mir', mir_img)
   cv2.imshow('mir2', mir2_img)
   cv2.waitKey(0)
-  mir_time = timeit.timeit(lambda: mir(img), number=100)
-  mir2_time = timeit.timeit(lambda: mir2(img), number=100)
+  mir_time = timeit.timeit(lambda: mir_p(img), number=100)
+  mir2_time = timeit.timeit(lambda: mir_n(img), number=100)
   print(f"mir time: {mir_time}")
   print(f"mir2 time: {mir2_time}")
 
