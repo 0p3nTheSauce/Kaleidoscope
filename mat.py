@@ -1,13 +1,20 @@
 import numpy as np
 import sys
+from numba import njit
 
 
+# def mir(A):
+#   C = A.T
+#   D = np.flip(C, 0)
+#   E = np.flip(D, 1)
+#   return E
 
+@njit
 def mir(A):
   C = A.T
-  D = np.flip(C, 0)
-  E = np.flip(D, 1)
-  return E
+  D = C[::-1, :]  # Flip vertically (equivalent to np.flip(C, 0))
+  E = D[:, ::-1] # Flip horizontally (equivalent to np.flip(D, 1))
+
 
 def mir2(A):
   C = A.T
