@@ -1,6 +1,10 @@
 *.mp4
+*.mp3
+#pycache
 __pycache__/
 illusion/
 mush/
 landscape/
 output_mp4s/
+time_sound.txt
+mp3s/

@@ -3,13 +3,13 @@ import sys
 from numba import njit
 
 
-# def mir(A):
-#   C = A.T
-#   D = np.flip(C, 0)
-#   E = np.flip(D, 1)
-#   return E
+def mir_original(A):
+  C = A.T
+  D = np.flip(C, 0)
+  E = np.flip(D, 1)
+  return E
 
-@njit
+@njit(cache=True)
 def mir(A):
   C = A.T
   D = C[::-1, :]  # Flip vertically (equivalent to np.flip(C, 0))
@@ -17,10 +17,11 @@ def mir(A):
   return E
 
 
-# def mir2(A):
-#   C = A.T
-#   return C
-@njit
+def mir2_original(A):
+  C = A.T
+  return C
+
+@njit(cache=True)
 def mir2(A):
   C = A.T
   return C
