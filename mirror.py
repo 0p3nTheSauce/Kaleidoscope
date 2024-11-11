@@ -23,7 +23,7 @@ def crop_square(img):
   dif2 = diff-dif1
   return img[:, dif1:w-dif2]
 
-def mirror(img, line):
+def mirror_original(img, line):
   if line == 'v':
     return cv2.flip(img, 0)
   elif line == 'h':
@@ -35,6 +35,27 @@ def mirror(img, line):
     r = mir_p(r)
     return cv2.merge((b, g, r))
   elif line == 'n':#negative incline diagonal
+    b, g, r = cv2.split(img)
+    b = mir_n(b)
+    g = mir_n(g)
+    r = mir_n(r)
+    return cv2.merge((b, g, r))
+  else:
+    print("Invalid line in mirror")
+    sys.exit(1)
+    
+def mirror(img, line):
+  if line == 0: #vertical
+    return cv2.flip(img, 0)
+  elif line == 1: #horizontal
+    return cv2.flip(img, 1)
+  elif line == 2: #positive incline diagonal
+    b, g, r = cv2.split(img)
+    b = mir_p(b)
+    g = mir_p(g)
+    r = mir_p(r)
+    return cv2.merge((b, g, r))
+  elif line == 3:#negative incline diagonal
     b, g, r = cv2.split(img)
     b = mir_n(b)
     g = mir_n(g)
@@ -90,11 +111,11 @@ def blackout_original(img, line):
   return bl
 
 @njit(cache=True)
-def blackout_1chan(img, line_code):
+def blackout_1chan(img, side):
   h, w = img.shape
   bl = img.copy()
   b, t = 1, 0
-  match line_code:
+  match side:
     case 0: # top vertical
       bl[h // 2:, :] = 0
     case 1: # bottom vertical
@@ -115,7 +136,7 @@ def blackout_1chan(img, line_code):
       raise ValueError("Invalid line code")
 
   #handle diagonal lines
-  if line_code >= 4:
+  if side >= 4:
     c = h - c
     m = -m
     for y in range(h):
@@ -126,11 +147,11 @@ def blackout_1chan(img, line_code):
           
   return bl
 
-def blackout(img, line):
+def blackout(img, side):
   b, g, r = cv2.split(img)
-  b = blackout_1chan(b, line)
-  g = blackout_1chan(g, line)
-  r = blackout_1chan(r, line)
+  b = blackout_1chan(b, side)
+  g = blackout_1chan(g, side)
+  r = blackout_1chan(r, side)
   return cv2.merge((b, g, r))
 
 def med_of(k):
@@ -215,7 +236,7 @@ def remove_diag_p(img, disp=False):
   return cp
 
 
-def half_mirror(img, line, disp=False):
+def half_mirror_original(img, line, disp=False):
   #mirrors half the image onto the other half
   sqr = crop_square(img)
   bl = blackout(sqr, line)
@@ -233,6 +254,29 @@ def half_mirror(img, line, disp=False):
   if ml == 'p':
     w = remove_diag_p(w)
   elif ml == 'n':
+    w = remove_diag_n(w)
+  return w
+
+def half_mirror(img, side, disp=False):
+  #mirrors half the image onto the other half
+  side_codes = {'tv': 0, 'bv': 1, 'lh': 2, 'rh': 3, 'bp': 4, 'tp': 5, 'bn': 6, 'tn': 7}
+  line_codes = {'v': 0, 'h': 1, 'p': 2, 'n': 3}
+  sqr = crop_square(img)
+  bl = blackout(sqr, side_codes[side])
+  ln = side[1]
+  mr = mirror(bl, line_codes[ln])
+   
+  if disp:
+    cv2.imshow('Square', sqr)
+    cv2.waitKey(0)
+    cv2.imshow('Blackout', bl)
+    cv2.waitKey(0)
+    cv2.imshow('Mirror', mr)
+    cv2.waitKey(0)
+  w = cv2.addWeighted(bl, 1.0, mr, 1.0, 0)
+  if ln == 'p':
+    w = remove_diag_p(w)
+  elif ln == 'n':
     w = remove_diag_n(w)
   return w
 
@@ -348,7 +392,7 @@ def main():
   cv2.imshow('Original', img)
   cv2.waitKey(0)
   img = crop_square(img)
-  img = cv2.resize(img, (500, 500))
+  #img = cv2.resize(img, (500, 500))
   cv2.imshow('Crop squared: ', img)
   cv2.waitKey(0)
   
@@ -356,9 +400,9 @@ def main():
  
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
   #spin_func(img, multi_mirror, time=1, outfolder=out) #very cool
-  spin_func(img, multi_mirror, time=1)
+  spin_func(img, multi_mirror, time=1, outfolder=out)
   #spin_func(img, ident, time=1)
-  #makeVideo(out)
+  makeVideo(out)
   #edgey(img ,time=20)
   
   

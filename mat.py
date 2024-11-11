@@ -14,7 +14,6 @@ def mir_n_original(A):
   return C
 
 
-
 @njit(cache=True)
 def mir_p(A): #positive diagonal
   C = A.T
