@@ -107,6 +107,7 @@ def disk(img):
 def spin_func(img, func, params=None, iter=360, deg=1, time=50, outfolder=None):
   if outfolder is not None:
     write = True
+    print(f'Writing to {outfolder}')
   else:
     write = False
   for i in range(0, iter, deg):

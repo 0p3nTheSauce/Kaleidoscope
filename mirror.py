@@ -384,11 +384,14 @@ def ident(img):
 
 def main():
   if len(sys.argv) == 1:
-    out = 'src_imgs/landscape'
+    in_img = 'src_imgs/landscape'
+    out = 'landscape'
   else:
-    out = sys.argv[1]
-  print(f'{out}.jpg')
-  img = cv2.imread(f'{out}.jpg')
+    # out = sys.argv[1]
+    print("this hasn't been fixed yet...")
+    sys.exit(1)
+  print(f'{in_img}.jpg')
+  img = cv2.imread(f'{in_img}.jpg')
   cv2.imshow('Original', img)
   cv2.waitKey(0)
   img = crop_square(img)
