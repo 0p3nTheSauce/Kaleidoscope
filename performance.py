@@ -6,32 +6,43 @@ import numpy as np
 #local imports
 from mat import mir_p, mir_n
 from mat_original import mir_p_o, mir_n_o
-from mirror import crop_square, blackout, blackout_i, blackout_m
-from mirror_original import blackout_o
+from mirror import crop_square, blackout
+from mirror_original import blackout_o, blackout_i, blackout_m
 
-def test_mirs_img(img):
+def test_mirs_img(img, numiter=100):
   
   #original functions
   o_mir_p = mir_p_o(img)
   o_mir_n = mir_n_o(img)
-  cv2.imshow('Original mir', o_mir_p)
-  cv2.imshow('Original mir2', o_mir_n)
+  print(f"Original mir functions for {numiter} iterations (seconds)")
+  cv2.imshow('Original mir_p', o_mir_p)
+  cv2.imshow('Original mir_n', o_mir_n)
   cv2.waitKey(0)
-  o_mir_p_time = timeit.timeit(lambda: mir_p_o(img), number=100)
-  o_mir_n_time = timeit.timeit(lambda: mir_n_o(img), number=100)
-  print(f"Original mir time: {o_mir_p_time}")
-  print(f"Original mir2 time: {o_mir_n_time}")
+  o_mir_p_time = timeit.timeit(lambda: mir_p_o(img), number=numiter)
+  o_mir_n_time = timeit.timeit(lambda: mir_n_o(img), number=numiter)
+  print(f"Original mir_p time: {o_mir_p_time}")
+  print(f"Original mir_n time: {o_mir_n_time}")
   
   #optimized functions
   mir_img = mir_p(img)
   mir2_img = mir_n(img)
-  cv2.imshow('mir', mir_img)
-  cv2.imshow('mir2', mir2_img)
+  print()
+  print(f"Modified mir functions for {numiter} iterations (seconds)")
+  cv2.imshow('mir_p', mir_img)
+  cv2.imshow('mir_n', mir2_img)
   cv2.waitKey(0)
-  mir_time = timeit.timeit(lambda: mir_p(img), number=100)
-  mir2_time = timeit.timeit(lambda: mir_n(img), number=100)
-  print(f"mir time: {mir_time}")
-  print(f"mir2 time: {mir2_time}")
+  mir_time = timeit.timeit(lambda: mir_p(img), number=numiter)
+  mir2_time = timeit.timeit(lambda: mir_n(img), number=numiter)
+  print(f"mir_p time: {mir_time}")
+  print(f"mir_p time: {mir2_time}")
+  '''
+  Original mir functions for 100 iterations (seconds)
+  Original mir_p time: 0.00047601999904145487
+  Original mir_n time: 2.157500057364814e-05
+  
+  Modified mir functions for 100 iterations (seconds)
+  mir_p time: 9.301099998992868e-05
+  mir_p time: 8.293099745060317e-05'''
 
 def test_blackout_img(img, numiter=100):
   #original function
@@ -131,6 +142,26 @@ def test_blackout_img(img, numiter=100):
   print(f"blackout time tp: {blackout_time_tp}")
   print(f"blackout time bn: {blackout_time_bn}")
   print(f"blackout time tn: {blackout_time_tn}")
+  '''
+  Original functions for 100 iterations (seconds)
+  Original blackout time tv: 0.39182827599870507
+  Original blackout time bv: 0.3818695129994012
+  Original blackout time lh: 0.38410538699827157
+  Original blackout time rh: 0.3846034720008902
+  Original blackout time bp: 33.727699044000474
+  Original blackout time tp: 34.71868012699997
+  Original blackout time bn: 34.081632714998705
+  Original blackout time tn: 33.73179519000041
+
+  Jit compiled functions for 100 iterations (seconds)
+  blackout time tv: 0.19463914899824886
+  blackout time bv: 0.1747481689999404
+  blackout time lh: 0.1698626850011351
+  blackout time rh: 0.17183801699866308
+  blackout time bp: 0.4557783880009083
+  blackout time tp: 0.4518411040007777
+  blackout time bn: 0.45001472900185036
+  blackout time tn: 0.451004742000805'''
 
   
 def test_modified_blackouts(img, numiter=100):
@@ -284,16 +315,54 @@ def test_modified_blackouts(img, numiter=100):
   print(f"blackout time bn: {blackout_time_bn_i}")
   print(f"blackout time tn: {blackout_time_tn_i}")
   
+  '''
+  blackoutv2 (partially jit compiled) for 100 iterations (seconds)
+  blackout time tv: 0.2001306870006374
+  blackout time bv: 0.18925111899807234
+  blackout time lh: 0.19029038100052276
+  blackout time rh: 0.19442824100042344
+  blackout time bp: 0.4711109599993506
+  blackout time tp: 0.5137944570014952
+  blackout time bn: 0.45774696100124856
+  blackout time tn: 0.46173637000174494
+
+  blackoutv3_m (fully jit, mutates) for 100 iterations (seconds)
+  blackout time tv: 0.29457256000023335
+  blackout time bv: 0.27850160299931304
+  blackout time lh: 0.2808784619992366
+  blackout time rh: 0.2802346810021845
+  blackout time bp: 0.5555819460023486
+  blackout time tp: 0.554230028999882
+  blackout time bn: 0.5505143469999894
+  blackout time tn: 0.5537112619967957
+
+  blackoutv3_i (fully jit, immutable) for 100 iterations (seconds)
+  blackout time tv: 0.32949251500031096
+  blackout time bv: 0.31490190399927087
+  blackout time lh: 0.32081450400073663
+  blackout time rh: 0.32218570400073077
+  blackout time bp: 0.5979335299998638
+  blackout time tp: 0.5929794860021502
+  blackout time bn: 0.5936000490000879
+  blackout time tn: 0.6046839369992085'''
+  
   
 
 def main():
   img = cv2.imread('src_imgs/landscape.jpg')
   img = crop_square(img)
-  # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
   cv2.imshow('Original Image', img)
   cv2.waitKey(0)
-  #test_mirs_img(img)
-  test_blackout_img(img, numiter=1)
+  print("testing mirs")
+  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+  test_mirs_img(gray)
+  print()
+  print("---------------------------------------------------------------")
+  print()
+  print("testing blackouts")
+  test_blackout_img(img)
+  # print()
+  # print("Second iteration of blackouts")
   #test_modified_blackouts(img)
   
 

@@ -2,9 +2,10 @@ import cv2
 import numpy as np
 import sys
 import statistics
+from numba import njit
 
 from mat_original import mir_p_o, mir_n_o
-from mirror import crop_square
+from mirror import crop_square, blackout_1chan
 
 def mirror_o(img, line):
   if line == 'v':
@@ -71,6 +72,25 @@ def blackout_o(img, line):
         if y >= yl:
           bl[x, y] = (0, 0, 0)  
   return bl
+
+#these two were attempts to improve blackout further, but were actually slower
+@njit(cache=True)
+def blackout_m(img, side):
+  #faster(?) but modifies memory, which means mutable state
+  img[:,:,0] = blackout_1chan(img[:,:,0], side)
+  img[:,:,1] = blackout_1chan(img[:,:,1], side)
+  img[:,:,2] = blackout_1chan(img[:,:,2], side)
+  return img
+
+@njit(cache=True)
+def blackout_i(img, side):
+  #perhaps slower but will not change the original memory
+  cp = img.copy()
+  cp[:,:,0] = blackout_1chan(img[:,:,0], side)
+  cp[:,:,1] = blackout_1chan(img[:,:,1], side)
+  cp[:,:,2] = blackout_1chan(img[:,:,2], side)
+  return cp
+
 
 def med_of_o(k):
   #get median tuple in kernel

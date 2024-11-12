@@ -90,22 +90,7 @@ def blackout(img, side):
   r = blackout_1chan(r, side)
   return cv2.merge((b, g, r))
 
-@njit(cache=True)
-def blackout_m(img, side):
-  #faster(?) but modifies memory, which means mutable state
-  img[:,:,0] = blackout_1chan(img[:,:,0], side)
-  img[:,:,1] = blackout_1chan(img[:,:,1], side)
-  img[:,:,2] = blackout_1chan(img[:,:,2], side)
-  return img
 
-@njit(cache=True)
-def blackout_i(img, side):
-  #perhaps slower but will not change the original memory
-  cp = img.copy()
-  cp[:,:,0] = blackout_1chan(img[:,:,0], side)
-  cp[:,:,1] = blackout_1chan(img[:,:,1], side)
-  cp[:,:,2] = blackout_1chan(img[:,:,2], side)
-  return cp
 
 def make_diag_n(img, color=(0, 255, 0)):
   #make diagnol line (negative gradient)
