@@ -90,12 +90,22 @@ def blackout(img, side):
   r = blackout_1chan(r, side)
   return cv2.merge((b, g, r))
 
-def med_of(k):
-  #get median tuple in kernel
-  #used to remove diagnols
-  t = list(zip(*k))
-  med = tuple(statistics.median(dim) for dim in t)
-  return med
+@njit(cache=True)
+def blackout_m(img, side):
+  #faster(?) but modifies memory, which means mutable state
+  img[:,:,0] = blackout_1chan(img[:,:,0], side)
+  img[:,:,1] = blackout_1chan(img[:,:,1], side)
+  img[:,:,2] = blackout_1chan(img[:,:,2], side)
+  return img
+
+@njit(cache=True)
+def blackout_i(img, side):
+  #perhaps slower but will not change the original memory
+  cp = img.copy()
+  cp[:,:,0] = blackout_1chan(img[:,:,0], side)
+  cp[:,:,1] = blackout_1chan(img[:,:,1], side)
+  cp[:,:,2] = blackout_1chan(img[:,:,2], side)
+  return cp
 
 def make_diag_n(img, color=(0, 255, 0)):
   #make diagnol line (negative gradient)
@@ -121,6 +131,15 @@ def make_diag_p(img, color=(0,255,0)):
   cv2.waitKey(0)
   return cp
 
+@njit(cache=True)
+def med_of(k):
+  #get median tuple in kernel
+  #used to remove diagnols
+  #does not do the true median
+  h, w = len(k), len(k[0])
+  flat = k.ravel()
+  s = np.sort(flat)
+  return s[h*w//2]  
 
 @njit(cache=True)
 def neighbours_n(img, coords):
@@ -142,9 +161,8 @@ def neighbours_p(img, coords):
        img[x+1, y-1], img[x+1, y], img[x+1, y+1]]
   return l 
             
-
-
-def remove_diag_n(img, disp=False):
+@njit(cache=True)
+def remove_diag_n(img):
   #removes diagnol lines (negative gradient) by taking the median 
   # of the neighbouring pixels
   h, w, _ = img.shape
@@ -155,12 +173,10 @@ def remove_diag_n(img, disp=False):
         k = neighbours_n(img, (rows, cols))
         med = med_of(k)
         cp[rows, cols] = med
-  if disp:
-    cv2.imshow('no diags', cp)
-    cv2.waitKey(0)
   return cp
-  
-def remove_diag_p(img, disp=False):
+
+@njit(cache=True)
+def remove_diag_p(img):
   #removes diagnol lines (positive gradient) by taking the median 
   # of the neighbouring pixels
   h, w, _ = img.shape
@@ -171,9 +187,6 @@ def remove_diag_p(img, disp=False):
         k = neighbours_p(img, (rows, cols))
         med = med_of(k)
         cp[rows, cols] = med
-  if disp:
-    cv2.imshow('no diags', cp)
-    cv2.waitKey(0)
   return cp
 
 def half_mirror(img, side, disp=False):

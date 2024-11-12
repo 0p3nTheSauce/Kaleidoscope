@@ -1,10 +1,12 @@
+#!/usr/bin/env python3
+
 import timeit
 import cv2
 import numpy as np
 #local imports
 from mat import mir_p, mir_n
 from mat_original import mir_p_o, mir_n_o
-from mirror import crop_square, blackout
+from mirror import crop_square, blackout, blackout_i, blackout_m
 from mirror_original import blackout_o
 
 def test_mirs_img(img):
@@ -42,21 +44,21 @@ def test_blackout_img(img, numiter=100):
   o_blackoutbn = blackout_o(img, 'bn')
   o_blackouttn = blackout_o(img, 'tn')
   
-  cv2.imshow('Original blackout', o_blackouttv)
+  cv2.imshow('Original blackout tv', o_blackouttv)
   cv2.waitKey(0)
-  cv2.imshow('Original blackout', o_blackoutbv)
+  cv2.imshow('Original blackout bv', o_blackoutbv)
   cv2.waitKey(0)
-  cv2.imshow('Original blackout', o_blackoutlh)
+  cv2.imshow('Original blackout lh', o_blackoutlh)
   cv2.waitKey(0)
-  cv2.imshow('Original blackout', o_blackoutrh)
+  cv2.imshow('Original blackout rh', o_blackoutrh)
   cv2.waitKey(0)
-  cv2.imshow('Original blackout', o_blackoutbp)
+  cv2.imshow('Original blackout bp', o_blackoutbp)
   cv2.waitKey(0)
-  cv2.imshow('Original blackout', o_blackouttp)
+  cv2.imshow('Original blackout tp', o_blackouttp)
   cv2.waitKey(0)
-  cv2.imshow('Original blackout', o_blackoutbn)
+  cv2.imshow('Original blackout bn', o_blackoutbn)
   cv2.waitKey(0)
-  cv2.imshow('Original blackout', o_blackouttn)  
+  cv2.imshow('Original blackout tn', o_blackouttn)  
   cv2.waitKey(0)
   
   cv2.destroyAllWindows()
@@ -91,21 +93,21 @@ def test_blackout_img(img, numiter=100):
   blackout_bn = blackout(img, bn)
   blackout_tn = blackout(img, tn)
   
-  cv2.imshow('blackout', blackout_tv)
+  cv2.imshow('blackout v2 tv', blackout_tv)
   cv2.waitKey(0)
-  cv2.imshow('blackout', blackout_bv)
+  cv2.imshow('blackout v2 bv', blackout_bv)
   cv2.waitKey(0)
-  cv2.imshow('blackout', blackout_lh)
+  cv2.imshow('blackout v2 lh', blackout_lh)
   cv2.waitKey(0)
-  cv2.imshow('blackout', blackout_rh)
+  cv2.imshow('blackout v2 rh', blackout_rh)
   cv2.waitKey(0)
-  cv2.imshow('blackout', blackout_bp)
+  cv2.imshow('blackout v2 bp', blackout_bp)
   cv2.waitKey(0)
-  cv2.imshow('blackout', blackout_tp)
+  cv2.imshow('blackout v2 tp', blackout_tp)
   cv2.waitKey(0)
-  cv2.imshow('blackout', blackout_bn)
+  cv2.imshow('blackout v2 bn', blackout_bn)
   cv2.waitKey(0)
-  cv2.imshow('blackout', blackout_tn)
+  cv2.imshow('blackout v2 tn', blackout_tn)
   cv2.waitKey(0)
   
   cv2.destroyAllWindows()
@@ -130,6 +132,159 @@ def test_blackout_img(img, numiter=100):
   print(f"blackout time bn: {blackout_time_bn}")
   print(f"blackout time tn: {blackout_time_tn}")
 
+  
+def test_modified_blackouts(img, numiter=100):
+  cp, cpi, cpm = img.copy(), img.copy(), img.copy()
+  
+  #first partially jit compiled
+  tv, bv, lh, rh, bp, tp, bn, tn = 0, 1, 2, 3, 4, 5, 6, 7# numba is better with numbers
+  blackouttv0 = blackout(cp, tv)
+  blackoutbv0 = blackout(cp, bv)
+  blackoutlh0 = blackout(cp, lh)
+  blackoutrh0 = blackout(cp, rh)
+  blackoutbp0 = blackout(cp, bp)
+  blackouttp0 = blackout(cp, tp)
+  blackoutbn0 = blackout(cp, bn)
+  blackouttn0 = blackout(cp, tn)
+  
+  cv2.imshow('blackout_v2_tv', blackouttv0)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_v2_bv', blackoutbv0)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_v2_lh', blackoutlh0)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_v2_rh', blackoutrh0)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_v2_bp', blackoutbp0)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_v2_tp', blackouttp0)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_v2_bn', blackoutbn0)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_v2_tn', blackouttn0)
+  cv2.waitKey(0)
+  
+  cv2.destroyAllWindows()
+  
+  blackout_time_tv0 = timeit.timeit(lambda: blackout(cp, tv), number=numiter)
+  blackout_time_bv0 = timeit.timeit(lambda: blackout(cp, bv), number=numiter)
+  blackout_time_lh0 = timeit.timeit(lambda: blackout(cp, lh), number=numiter)
+  blackout_time_rh0 = timeit.timeit(lambda: blackout(cp, rh), number=numiter)
+  blackout_time_bp0 = timeit.timeit(lambda: blackout(cp, bp), number=numiter)
+  blackout_time_tp0 = timeit.timeit(lambda: blackout(cp, tp), number=numiter)
+  blackout_time_bn0 = timeit.timeit(lambda: blackout(cp, bn), number=numiter)
+  blackout_time_tn0 = timeit.timeit(lambda: blackout(cp, tn), number=numiter)
+  
+  print()
+  print(f"blackoutv2 (partially jit compiled) for {numiter} iterations (seconds)")
+  print(f"blackout time tv: {blackout_time_tv0}")
+  print(f"blackout time bv: {blackout_time_bv0}")
+  print(f"blackout time lh: {blackout_time_lh0}")
+  print(f"blackout time rh: {blackout_time_rh0}")
+  print(f"blackout time bp: {blackout_time_bp0}")
+  print(f"blackout time tp: {blackout_time_tp0}")
+  print(f"blackout time bn: {blackout_time_bn0}")
+  print(f"blackout time tn: {blackout_time_tn0}")
+  
+  #fully jit compiled, mutates the image
+  blackouttv_m = blackout_m(cpi, tv)
+  blackoutbv_m = blackout_m(cpi, bv)
+  blackoutlh_m = blackout_m(cpi, lh)
+  blackoutrh_m = blackout_m(cpi, rh)
+  blackoutbp_m = blackout_m(cpi, bp)
+  blackouttp_m = blackout_m(cpi, tp)
+  blackoutbn_m = blackout_m(cpi, bn)
+  blackouttn_m = blackout_m(cpi, tn)
+  
+  cv2.imshow('blackout_m_tv', blackouttv_m)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_m_bv', blackoutbv_m)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_m_lh', blackoutlh_m)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_m_rh', blackoutrh_m)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_m_bp', blackoutbp_m)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_m_tp', blackouttp_m)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_m_bn', blackoutbn_m)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_m_tn', blackouttn_m)
+  cv2.waitKey(0)
+  
+  cv2.destroyAllWindows()
+  
+  blackout_time_tv_m = timeit.timeit(lambda: blackout_m(cpi, tv), number=numiter)
+  blackout_time_bv_m = timeit.timeit(lambda: blackout_m(cpi, bv), number=numiter)
+  blackout_time_lh_m = timeit.timeit(lambda: blackout_m(cpi, lh), number=numiter)
+  blackout_time_rh_m = timeit.timeit(lambda: blackout_m(cpi, rh), number=numiter)
+  blackout_time_bp_m = timeit.timeit(lambda: blackout_m(cpi, bp), number=numiter)
+  blackout_time_tp_m = timeit.timeit(lambda: blackout_m(cpi, tp), number=numiter)
+  blackout_time_bn_m = timeit.timeit(lambda: blackout_m(cpi, bn), number=numiter)
+  blackout_time_tn_m = timeit.timeit(lambda: blackout_m(cpi, tn), number=numiter)
+  
+  print()
+  print(f"blackoutv3_m (fully jit, mutates) for {numiter} iterations (seconds)")
+  print(f"blackout time tv: {blackout_time_tv_m}")
+  print(f"blackout time bv: {blackout_time_bv_m}")
+  print(f"blackout time lh: {blackout_time_lh_m}")
+  print(f"blackout time rh: {blackout_time_rh_m}")
+  print(f"blackout time bp: {blackout_time_bp_m}")
+  print(f"blackout time tp: {blackout_time_tp_m}")
+  print(f"blackout time bn: {blackout_time_bn_m}")
+  print(f"blackout time tn: {blackout_time_tn_m}")
+  
+  #fully jit compiled, immutable
+  blackouttv_i = blackout_i(cpm, tv)
+  blackoutbv_i = blackout_i(cpm, bv)
+  blackoutlh_i = blackout_i(cpm, lh)
+  blackoutrh_i = blackout_i(cpm, rh)
+  blackoutbp_i = blackout_i(cpm, bp)
+  blackouttp_i = blackout_i(cpm, tp)
+  blackoutbn_i = blackout_i(cpm, bn)
+  blackouttn_i = blackout_i(cpm, tn)
+  
+  cv2.imshow('blackout_i_tv', blackouttv_i)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_i_bv', blackoutbv_i)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_i_lh', blackoutlh_i)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_i_rh', blackoutrh_i)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_i_bp', blackoutbp_i)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_i_tp', blackouttp_i)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_i_bn', blackoutbn_i)
+  cv2.waitKey(0)
+  cv2.imshow('blackout_i_tn', blackouttn_i)
+  cv2.waitKey(0)
+  
+  cv2.destroyAllWindows()
+  
+  blackout_time_tv_i = timeit.timeit(lambda: blackout_i(cpm, tv), number=numiter)
+  blackout_time_bv_i = timeit.timeit(lambda: blackout_i(cpm, bv), number=numiter)
+  blackout_time_lh_i = timeit.timeit(lambda: blackout_i(cpm, lh), number=numiter)
+  blackout_time_rh_i = timeit.timeit(lambda: blackout_i(cpm, rh), number=numiter)
+  blackout_time_bp_i = timeit.timeit(lambda: blackout_i(cpm, bp), number=numiter)
+  blackout_time_tp_i = timeit.timeit(lambda: blackout_i(cpm, tp), number=numiter)
+  blackout_time_bn_i = timeit.timeit(lambda: blackout_i(cpm, bn), number=numiter)
+  blackout_time_tn_i = timeit.timeit(lambda: blackout_i(cpm, tn), number=numiter)
+  
+  print()
+  print(f"blackoutv3_i (fully jit, immutable) for {numiter} iterations (seconds)")
+  print(f"blackout time tv: {blackout_time_tv_i}")
+  print(f"blackout time bv: {blackout_time_bv_i}")
+  print(f"blackout time lh: {blackout_time_lh_i}")
+  print(f"blackout time rh: {blackout_time_rh_i}")
+  print(f"blackout time bp: {blackout_time_bp_i}")
+  print(f"blackout time tp: {blackout_time_tp_i}")
+  print(f"blackout time bn: {blackout_time_bn_i}")
+  print(f"blackout time tn: {blackout_time_tn_i}")
+  
+  
 
 def main():
   img = cv2.imread('src_imgs/landscape.jpg')
@@ -138,8 +293,8 @@ def main():
   cv2.imshow('Original Image', img)
   cv2.waitKey(0)
   #test_mirs_img(img)
-  test_blackout_img(img, numiter=100)
-
+  test_blackout_img(img, numiter=1)
+  #test_modified_blackouts(img)
   
 
 if __name__ == "__main__":

@@ -72,6 +72,13 @@ def blackout_o(img, line):
           bl[x, y] = (0, 0, 0)  
   return bl
 
+def med_of_o(k):
+  #get median tuple in kernel
+  #used to remove diagnols
+  t = list(zip(*k))
+  med = tuple(statistics.median(dim) for dim in t)
+  return med
+
 def neighbours_n_o(img, coords):
   #gets the neighbouring pixel values 
   #used by remove_diag_n
@@ -81,12 +88,6 @@ def neighbours_n_o(img, coords):
        img[y+1, x-1], img[y+1, x], img[y+1, x+1]]
   return l
             
-def med_of(k):
-  #get median tuple in kernel
-  #used to remove diagnols
-  t = list(zip(*k))
-  med = tuple(statistics.median(dim) for dim in t)
-  return med
             
 def neighbours_p_o(img, coords):
   #gets the neighbouring pixel values 
@@ -106,7 +107,7 @@ def remove_diag_n_o(img, disp=False):
     for cols in range(1, w-1):
       if rows == cols:
         k = neighbours_n_o(img, (rows, cols))
-        med = med_of(k)
+        med = med_of_o(k)
         cp[rows, cols] = med
   if disp:
     cv2.imshow('no diags', cp)
@@ -122,7 +123,7 @@ def remove_diag_p_o(img, disp=False):
     for cols in range(1, w-1):
       if (h-rows-1) == cols:
         k = neighbours_p_o(img, (rows, cols))
-        med = med_of(k)
+        med = med_of_o(k)
         cp[rows, cols] = med
   if disp:
     cv2.imshow('no diags', cp)
