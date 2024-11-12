@@ -2,20 +2,21 @@ import timeit
 import cv2
 import numpy as np
 #local imports
-from mat import mir_p, mir_n, mir_p_original, mir_n_original
-from mirror import crop_square, blackout_original, blackout
-
+from mat import mir_p, mir_n
+from mat_original import mir_p_o, mir_n_o
+from mirror import crop_square, blackout
+from mirror_original import blackout_o
 
 def test_mirs_img(img):
   
   #original functions
-  o_mir_p = mir_p_original(img)
-  o_mir_n = mir_n_original(img)
+  o_mir_p = mir_p_o(img)
+  o_mir_n = mir_n_o(img)
   cv2.imshow('Original mir', o_mir_p)
   cv2.imshow('Original mir2', o_mir_n)
   cv2.waitKey(0)
-  o_mir_p_time = timeit.timeit(lambda: mir_p_original(img), number=100)
-  o_mir_n_time = timeit.timeit(lambda: mir_n_original(img), number=100)
+  o_mir_p_time = timeit.timeit(lambda: mir_p_o(img), number=100)
+  o_mir_n_time = timeit.timeit(lambda: mir_n_o(img), number=100)
   print(f"Original mir time: {o_mir_p_time}")
   print(f"Original mir2 time: {o_mir_n_time}")
   
@@ -32,14 +33,14 @@ def test_mirs_img(img):
 
 def test_blackout_img(img, numiter=100):
   #original function
-  o_blackouttv = blackout_original(img, 'tv')
-  o_blackoutbv = blackout_original(img, 'bv')
-  o_blackoutlh = blackout_original(img, 'lh')
-  o_blackoutrh = blackout_original(img, 'rh')
-  o_blackoutbp = blackout_original(img, 'bp')
-  o_blackouttp = blackout_original(img, 'tp')
-  o_blackoutbn = blackout_original(img, 'bn')
-  o_blackouttn = blackout_original(img, 'tn')
+  o_blackouttv = blackout_o(img, 'tv')
+  o_blackoutbv = blackout_o(img, 'bv')
+  o_blackoutlh = blackout_o(img, 'lh')
+  o_blackoutrh = blackout_o(img, 'rh')
+  o_blackoutbp = blackout_o(img, 'bp')
+  o_blackouttp = blackout_o(img, 'tp')
+  o_blackoutbn = blackout_o(img, 'bn')
+  o_blackouttn = blackout_o(img, 'tn')
   
   cv2.imshow('Original blackout', o_blackouttv)
   cv2.waitKey(0)
@@ -60,14 +61,14 @@ def test_blackout_img(img, numiter=100):
   
   cv2.destroyAllWindows()
   
-  o_blackout_timetv = timeit.timeit(lambda: blackout_original(img, 'tv'), number=numiter)
-  o_blackout_timebv = timeit.timeit(lambda: blackout_original(img, 'bv'), number=numiter)
-  o_blackout_timelh = timeit.timeit(lambda: blackout_original(img, 'lh'), number=numiter)
-  o_blackout_timerh = timeit.timeit(lambda: blackout_original(img, 'rh'), number=numiter)
-  o_blackout_timebp = timeit.timeit(lambda: blackout_original(img, 'bp'), number=numiter)
-  o_blackout_timetp = timeit.timeit(lambda: blackout_original(img, 'tp'), number=numiter)
-  o_blackout_timebn = timeit.timeit(lambda: blackout_original(img, 'bn'), number=numiter)
-  o_blackout_timetn = timeit.timeit(lambda: blackout_original(img, 'tn'), number=numiter)
+  o_blackout_timetv = timeit.timeit(lambda: blackout_o(img, 'tv'), number=numiter)
+  o_blackout_timebv = timeit.timeit(lambda: blackout_o(img, 'bv'), number=numiter)
+  o_blackout_timelh = timeit.timeit(lambda: blackout_o(img, 'lh'), number=numiter)
+  o_blackout_timerh = timeit.timeit(lambda: blackout_o(img, 'rh'), number=numiter)
+  o_blackout_timebp = timeit.timeit(lambda: blackout_o(img, 'bp'), number=numiter)
+  o_blackout_timetp = timeit.timeit(lambda: blackout_o(img, 'tp'), number=numiter)
+  o_blackout_timebn = timeit.timeit(lambda: blackout_o(img, 'bn'), number=numiter)
+  o_blackout_timetn = timeit.timeit(lambda: blackout_o(img, 'tn'), number=numiter)
   
   print(f"Original functions for {numiter} iterations (seconds)")
   print(f"Original blackout time tv: {o_blackout_timetv}")

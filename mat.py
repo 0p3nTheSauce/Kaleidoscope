@@ -2,18 +2,6 @@ import numpy as np
 import sys
 from numba import njit
 
-
-def mir_p_original(A):
-  C = A.T
-  D = np.flip(C, 0)
-  E = np.flip(D, 1)
-  return E
-
-def mir_n_original(A):
-  C = A.T
-  return C
-
-
 @njit(cache=True)
 def mir_p(A): #positive diagonal
   C = A.T

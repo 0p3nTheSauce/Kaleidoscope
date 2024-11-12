@@ -23,27 +23,6 @@ def crop_square(img):
   dif2 = diff-dif1
   return img[:, dif1:w-dif2]
 
-def mirror_original(img, line):
-  if line == 'v':
-    return cv2.flip(img, 0)
-  elif line == 'h':
-    return cv2.flip(img, 1)
-  elif line == 'p': #positive incline diagonal
-    b, g, r = cv2.split(img)
-    b = mir_p(b)
-    g = mir_p(g)
-    r = mir_p(r)
-    return cv2.merge((b, g, r))
-  elif line == 'n':#negative incline diagonal
-    b, g, r = cv2.split(img)
-    b = mir_n(b)
-    g = mir_n(g)
-    r = mir_n(r)
-    return cv2.merge((b, g, r))
-  else:
-    print("Invalid line in mirror")
-    sys.exit(1)
-    
 def mirror(img, line):
   if line == 0: #vertical
     return cv2.flip(img, 0)
@@ -65,50 +44,7 @@ def mirror(img, line):
     print("Invalid line in mirror")
     sys.exit(1)
 
-def blackout_original(img, line):
-  #blacks out half an image
-  # sqr = crop_square(img)
-  h, w, _ = img.shape
-  bl = img.copy()
-  if line == 'tv':
-    bl[h // 2:, :, :] = (0, 0, 0)
-    return bl
-  elif line == 'bv':
-    bl[:h // 2, :, :] = (0, 0, 0)
-    return bl
-  elif line == 'lh':
-    bl[:, w // 2:, :] = (0, 0, 0)
-    return bl
-  elif line == 'rh':
-    bl[:, :w // 2, :] = (0, 0, 0)
-    return bl
-  elif line == 'bp':  
-    m, c = 1, 0
-    o = 'b'
-  elif line == 'tp':
-    m, c, = 1, 0
-    o = 't'
-  elif line == 'bn':#this is bottom negative slope
-    m, c = -1, h
-    o = 't' #think of this as operator, no correlation to name because of inversion
-  elif line == 'tn':
-    m, c = -1, h
-    o = 'b'
-  else:
-    print("Invalid line")
-    sys.exit(1)
-  c = h - c
-  m = -m
-  for y in range(h):
-    for x in range(w):
-      yl = m * x + c
-      if o == 'b':
-        if y <= yl:
-          bl[x, y] = (0, 0, 0)
-      else:
-        if y >= yl:
-          bl[x, y] = (0, 0, 0)  
-  return bl
+
 
 @njit(cache=True)
 def blackout_1chan(img, side):
@@ -185,6 +121,8 @@ def make_diag_p(img, color=(0,255,0)):
   cv2.waitKey(0)
   return cp
 
+
+@njit(cache=True)
 def neighbours_n(img, coords):
   #gets the neighbouring pixel values 
   #used by remove_diag_n
@@ -193,7 +131,8 @@ def neighbours_n(img, coords):
        img[y, x-1], img[y, x], img[y, x+1],
        img[y+1, x-1], img[y+1, x], img[y+1, x+1]]
   return l
-            
+
+@njit(cache=True)
 def neighbours_p(img, coords):
   #gets the neighbouring pixel values 
   #used by remove_diag_p
@@ -203,6 +142,8 @@ def neighbours_p(img, coords):
        img[x+1, y-1], img[x+1, y], img[x+1, y+1]]
   return l 
             
+
+
 def remove_diag_n(img, disp=False):
   #removes diagnol lines (negative gradient) by taking the median 
   # of the neighbouring pixels
@@ -234,28 +175,6 @@ def remove_diag_p(img, disp=False):
     cv2.imshow('no diags', cp)
     cv2.waitKey(0)
   return cp
-
-
-def half_mirror_original(img, line, disp=False):
-  #mirrors half the image onto the other half
-  sqr = crop_square(img)
-  bl = blackout(sqr, line)
-  ml = line[1]
-  mr = mirror(bl, ml)
-   
-  if disp:
-    cv2.imshow('Square', sqr)
-    cv2.waitKey(0)
-    cv2.imshow('Blackout', bl)
-    cv2.waitKey(0)
-    cv2.imshow('Mirror', mr)
-    cv2.waitKey(0)
-  w = cv2.addWeighted(bl, 1.0, mr, 1.0, 0)
-  if ml == 'p':
-    w = remove_diag_p(w)
-  elif ml == 'n':
-    w = remove_diag_n(w)
-  return w
 
 def half_mirror(img, side, disp=False):
   #mirrors half the image onto the other half
@@ -384,8 +303,8 @@ def ident(img):
 
 def main():
   if len(sys.argv) == 1:
-    in_img = 'src_imgs/landscape'
-    out = 'landscape'
+    in_img = 'src_imgs/illusion'
+    out = 'illusion'
   else:
     # out = sys.argv[1]
     print("this hasn't been fixed yet...")
@@ -395,17 +314,15 @@ def main():
   cv2.imshow('Original', img)
   cv2.waitKey(0)
   img = crop_square(img)
-  #img = cv2.resize(img, (500, 500))
+  img = cv2.resize(img, (500, 500))
   cv2.imshow('Crop squared: ', img)
   cv2.waitKey(0)
-  
-  
- 
+
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
   #spin_func(img, multi_mirror, time=1, outfolder=out) #very cool
-  spin_func(img, multi_mirror, time=1, outfolder=out)
-  #spin_func(img, ident, time=1)
-  makeVideo(out)
+  #spin_func(img, multi_mirror, time=1, outfolder=out)
+  spin_func(img, multi_mirror, time=1)
+  #makeVideo(out)
   #edgey(img ,time=20)
   
   
