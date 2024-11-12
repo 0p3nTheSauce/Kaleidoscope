@@ -61,7 +61,7 @@ def blackout_1chan(img, side):
     case 3: # right horizontal 
       bl[:, :w // 2] = 0
     case 4: # bottom positive slope
-      m, c, o = 1, h, b
+      m, c, o = 1, 0, b
     case 5: # top positive slope
       m, c, o = 1, 0, t
     case 6: # bottom negative slope
