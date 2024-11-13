@@ -152,33 +152,59 @@ def neighbours_p(img, coords):
   ]
 
             
+# @njit(cache=True)
+# def remove_diag_n(img):
+#   #removes diagnol lines (negative gradient) by taking the median 
+#   # of the neighbouring pixels
+#   h, w, _ = img.shape
+#   cp = img.copy()
+#   for rows in range(1, h-1):
+#     for cols in range(1, w-1):
+#       if rows == cols:
+#         k = neighbours_n(img, (rows, cols))
+#         med = med_of(k)
+#         cp[rows, cols] = med
+#   return cp
+
+# @njit(cache=True)
+# def remove_diag_p(img):
+#   #removes diagnol lines (positive gradient) by taking the median 
+#   # of the neighbouring pixels
+#   h, w, _ = img.shape
+#   cp = img.copy()
+#   for rows in range(1, h-1):
+#     for cols in range(1, w-1):
+#       if (h-rows-1) == cols:
+#         k = neighbours_p(img, (rows, cols))
+#         med = med_of(k)
+#         cp[rows, cols] = med
+#   return cp
+
 @njit(cache=True)
 def remove_diag_n(img):
   #removes diagnol lines (negative gradient) by taking the median 
   # of the neighbouring pixels
   h, w, _ = img.shape
-  cp = img.copy()
   for rows in range(1, h-1):
     for cols in range(1, w-1):
       if rows == cols:
         k = neighbours_n(img, (rows, cols))
         med = med_of(k)
-        cp[rows, cols] = med
-  return cp
+        img[rows, cols] = med
+  return img
 
 @njit(cache=True)
 def remove_diag_p(img):
   #removes diagnol lines (positive gradient) by taking the median 
   # of the neighbouring pixels
   h, w, _ = img.shape
-  cp = img.copy()
   for rows in range(1, h-1):
     for cols in range(1, w-1):
       if (h-rows-1) == cols:
         k = neighbours_p(img, (rows, cols))
         med = med_of(k)
-        cp[rows, cols] = med
-  return cp
+        img[rows, cols] = med
+  return img
 
 def half_mirror(img, side, disp=False):
   #mirrors half the image onto the other half
@@ -307,8 +333,8 @@ def ident(img):
 
 def main():
   if len(sys.argv) == 1:
-    in_img = 'src_imgs/illusion'
-    out = 'illusion'
+    in_img = 'src_imgs/mush'
+    out = 'mush'
   else:
     # out = sys.argv[1]
     print("this hasn't been fixed yet...")
@@ -318,7 +344,7 @@ def main():
   cv2.imshow('Original', img)
   cv2.waitKey(0)
   img = crop_square(img)
-  img = cv2.resize(img, (500, 500))
+  #img = cv2.resize(img, (500, 500))
   cv2.imshow('Crop squared: ', img)
   cv2.waitKey(0)
 
