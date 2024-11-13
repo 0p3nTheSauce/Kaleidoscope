@@ -2,7 +2,6 @@
 import cv2
 import numpy as np
 import sys
-import sys
 from numba import njit
 #local
 from mat import mir_p, mir_n
@@ -197,7 +196,6 @@ def half_mirror(img, side, disp=False):
   elif ln == 'n':
     w = remove_diag_n(w)
   return w
-
 
 def spin_mirror(img):
   cv2.imshow('Image', img)

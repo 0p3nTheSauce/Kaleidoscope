@@ -91,6 +91,15 @@ def blackout_i(img, side):
   cp[:,:,2] = blackout_1chan(img[:,:,2], side)
   return cp
 
+@njit(cache=True)
+def blackout_gpt(img, side): #chatgpts fail
+    # Split channels
+    b, g, r = img[:, :, 0], img[:, :, 1], img[:, :, 2]
+    b = blackout_1chan(b, side)
+    g = blackout_1chan(g, side)
+    r = blackout_1chan(r, side)
+    # Merge channels in one step
+    return np.stack((b, g, r), axis=-1)
 
 def med_of_o(k):
   #get median tuple in kernel
