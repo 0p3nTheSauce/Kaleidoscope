@@ -90,9 +90,7 @@ def blackout(img, side):
   r = blackout_1chan(r, side)
   return cv2.merge((b, g, r))
 
-
-
-def make_diag_n(img, color=(0, 255, 0)):
+def make_diag_n(img, color=(0, 255, 0), disp=False):
   #make diagnol line (negative gradient)
   h, w, _ = img.shape
   cp = img.copy()
@@ -100,11 +98,12 @@ def make_diag_n(img, color=(0, 255, 0)):
     for columns in range(w):
       if rows == columns:
         cp[rows, columns] = color
-  cv2.imshow('diag', cp)
-  cv2.waitKey(0)
+  if disp:
+    cv2.imshow('diag', cp)
+    cv2.waitKey(0)
   return cp
 
-def make_diag_p(img, color=(0,255,0)):
+def make_diag_p(img, color=(0,255,0), disp=False):
   #make diagnol line (negative gradient)
   h, w, _ = img.shape
   cp = img.copy()
@@ -112,39 +111,46 @@ def make_diag_p(img, color=(0,255,0)):
     for columns in range(w):
       if (h-1-rows) == columns:
         cp[rows, columns] = color
-  cv2.imshow('diag', cp)
-  cv2.waitKey(0)
+  if disp:
+    cv2.imshow('diag', cp)
+    cv2.waitKey(0)
   return cp
+
 
 @njit(cache=True)
 def med_of(k):
-  #get median tuple in kernel
-  #used to remove diagnols
-  #does not do the true median
-  h, w = len(k), len(k[0])
-  flat = k.ravel()
-  s = np.sort(flat)
-  return s[h*w//2]  
+    # Separate channels manually for each color dimension
+    r = np.array([px[0] for px in k])
+    g = np.array([px[1] for px in k])
+    b = np.array([px[2] for px in k])
+    
+    # Find the median for each channel
+    med_r = np.median(r)
+    med_g = np.median(g)
+    med_b = np.median(b)
+    
+    return (med_r, med_g, med_b)
 
 @njit(cache=True)
 def neighbours_n(img, coords):
-  #gets the neighbouring pixel values 
-  #used by remove_diag_n
+  # Gets the neighbouring pixel values
   x, y = coords
-  l = [img[y-1, x-1], img[y-1, x], img[y-1, x+1],
-       img[y, x-1], img[y, x], img[y, x+1],
-       img[y+1, x-1], img[y+1, x], img[y+1, x+1]]
-  return l
+  return [
+    img[y-1, x-1], img[y-1, x], img[y-1, x+1],
+    img[y, x-1], img[y, x], img[y, x+1],
+    img[y+1, x-1], img[y+1, x], img[y+1, x+1]
+  ]
 
 @njit(cache=True)
 def neighbours_p(img, coords):
   #gets the neighbouring pixel values 
-  #used by remove_diag_p
   x, y = coords
-  l = [img[x-1, y-1], img[x-1, y], img[x-1, y+1],
-       img[x, y-1], img[x, y], img[x, y+1],
-       img[x+1, y-1], img[x+1, y], img[x+1, y+1]]
-  return l 
+  return [
+    img[x-1, y-1], img[x-1, y], img[x-1, y+1],
+    img[x, y-1], img[x, y], img[x, y+1],
+    img[x+1, y-1], img[x+1, y], img[x+1, y+1]
+  ]
+
             
 @njit(cache=True)
 def remove_diag_n(img):

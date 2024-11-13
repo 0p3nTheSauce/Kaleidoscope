@@ -2,7 +2,9 @@ import numpy as np
 import sys
 from numba import njit
 
-@njit(cache=True)
+
+#njit provides little benefit
+@njit(cache=True)        
 def mir_p(A): #positive diagonal
   C = A.T
   D = C[::-1, :]  # Flip vertically (equivalent to np.flip(C, 0))
@@ -13,18 +15,6 @@ def mir_p(A): #positive diagonal
 def mir_n(A): #negative diagonal
   C = A.T
   return C
-
-# def mir_diag(m, d):
-#   if d == 1:
-#     return mir(m)
-#   elif d == -1:
-#     return mir2(m)
-#   else:
-#     #error
-#     print("invalid diagonal")
-#     sys.exit(1)
-
-
 
 if __name__ == '__main__':
   # Define two matrices

@@ -6,8 +6,8 @@ import numpy as np
 #local imports
 from mat import mir_p, mir_n
 from mat_original import mir_p_o, mir_n_o
-from mirror import crop_square, blackout
-from mirror_original import blackout_o, blackout_i, blackout_m
+from mirror import crop_square, blackout, mirror, remove_diag_n, remove_diag_p, make_diag_n, make_diag_p
+from mirror_original import blackout_o, blackout_i, blackout_m, mirror_o, remove_diag_n_o, remove_diag_p_o
 
 def test_mirs_img(img, numiter=100):
   
@@ -346,24 +346,165 @@ def test_modified_blackouts(img, numiter=100):
   blackout time bn: 0.5936000490000879
   blackout time tn: 0.6046839369992085'''
   
+def test_mirror(img, numiter=100, disp=False):
+  v, h, p, n = 0, 1, 2, 3
+  #original functions
+  o_mirrorv = mirror_o(img, v)
+  o_mirrorh = mirror_o(img, h)
+  o_mirrorp = mirror_o(img, p)
+  o_mirrorn = mirror_o(img, n)
   
+  if disp:
+    cv2.imshow('Original mirror v', o_mirrorv)
+    cv2.waitKey(0)
+    cv2.imshow('Original mirror h', o_mirrorh)
+    cv2.waitKey(0)
+    cv2.imshow('Original mirror p', o_mirrorp)
+    cv2.waitKey(0)
+    cv2.imshow('Original mirror n', o_mirrorn)
+    cv2.waitKey(0)
+  
+  cv2.destroyAllWindows()
+  
+  o_mirror_timev = timeit.timeit(lambda: mirror_o(img, v), number=numiter)
+  o_mirror_timeh = timeit.timeit(lambda: mirror_o(img, h), number=numiter)
+  o_mirror_timep = timeit.timeit(lambda: mirror_o(img, p), number=numiter)
+  o_mirror_timen = timeit.timeit(lambda: mirror_o(img, n), number=numiter)
+  
+  print()
+  print(f"Original mirror functions for {numiter} iterations (seconds)")
+  print(f"Original mirror time v: {o_mirror_timev}")
+  print(f"Original mirror time h: {o_mirror_timeh}")
+  print(f"Original mirror time p: {o_mirror_timep}")
+  print(f"Original mirror time n: {o_mirror_timen}")
+  
+  #optimized functions
+  mirrorv = mirror(img, v)
+  mirrorh = mirror(img, h)
+  mirrorp = mirror(img, p)
+  mirrorn = mirror(img, n)
 
+  if disp:
+    cv2.imshow('mirror v', mirrorv)
+    cv2.waitKey(0)
+    cv2.imshow('mirror h', mirrorh)
+    cv2.waitKey(0)
+    cv2.imshow('mirror p', mirrorp)
+    cv2.waitKey(0)
+    cv2.imshow('mirror n', mirrorn)
+    cv2.waitKey(0)
+  
+  cv2.destroyAllWindows()
+  
+  mirror_timev = timeit.timeit(lambda: mirror(img, v), number=numiter)
+  mirror_timeh = timeit.timeit(lambda: mirror(img, h), number=numiter)
+  mirror_timep = timeit.timeit(lambda: mirror(img, p), number=numiter)
+  mirror_timen = timeit.timeit(lambda: mirror(img, n), number=numiter)
+  
+  print()
+  print(f"Modified mirror functions for {numiter} iterations (seconds)")
+  print(f"mirror time v: {mirror_timev}")
+  print(f"mirror time h: {mirror_timeh}")
+  print(f"mirror time p: {mirror_timep}")
+  print(f"mirror time n: {mirror_timen}")
+  
+  '''
+  Original mirror functions for 100 iterations (seconds)
+  Original mirror time v: 0.07256410300033167
+  Original mirror time h: 0.06661735300440341
+  Original mirror time p: 0.488386511002318
+  Original mirror time n: 0.4426036499935435
+
+  Modified mirror functions for 100 iterations (seconds)
+  mirror time v: 0.043370286002755165
+  mirror time h: 0.06154745399544481
+  mirror time p: 0.4835698019960546
+  mirror time n: 0.4653278540063184'''
+  
+def test_remove_diag(img, numiter=100):
+  #make images
+  diagp = make_diag_p(img)
+  diagn = make_diag_n(img)
+  
+  cv2.imshow("Diag p", diagp)
+  cv2.waitKey(0)
+  cv2.imshow("Diag n", diagn)
+  cv2.waitKey(0)
+  
+  #original functions
+  removedp = remove_diag_p_o(diagp)
+  removedn = remove_diag_n_o(diagn)
+  
+  cv2.imshow("Removed diag p", removedp)
+  cv2.waitKey(0)
+  cv2.imshow("Removed diag n", removedn)
+  cv2.waitKey(0)
+  
+  cv2.destroyAllWindows()
+  
+  removedp_time = timeit.timeit(lambda: remove_diag_p_o(diagp), number=numiter)
+  removedn_time = timeit.timeit(lambda: remove_diag_n_o(diagn), number=numiter)
+  
+  print()
+  print(f"Original remove diag functions for {numiter} iterations (seconds)")
+  print(f"Original remove diag time p: {removedp_time}")
+  print(f"Original remove diag time n: {removedn_time}")
+  
+  #optimized functions
+  removedp = remove_diag_p(diagp)
+  removedn = remove_diag_n(diagn)
+  
+  cv2.imshow("Removed diag p", removedp)
+  cv2.waitKey(0)
+  cv2.imshow("Removed diag n", removedn)
+  cv2.waitKey(0)
+  
+  cv2.destroyAllWindows()
+  
+  removedp_time = timeit.timeit(lambda: remove_diag_p(diagp), number=numiter)
+  removedn_time = timeit.timeit(lambda: remove_diag_n(diagn), number=numiter)
+  
+  print()
+  print(f"Modified remove diag functions for {numiter} iterations (seconds)")
+  print(f"Modified remove diag time p: {removedp_time}")
+  print(f"Modified remove diag time n: {removedn_time}")
+  
+  '''
+  Original remove diag functions for 100 iterations (seconds)
+  Original remove diag time p: 8.11424048399931
+  Original remove diag time n: 4.24769181100055
+
+  Modified remove diag functions for 100 iterations (seconds)
+  Modified remove diag time p: 0.16073157700157026
+  Modified remove diag time n: 0.1617420470029174
+  '''
+  
 def main():
   img = cv2.imread('src_imgs/landscape.jpg')
   img = crop_square(img)
   cv2.imshow('Original Image', img)
   cv2.waitKey(0)
-  print("testing mirs")
-  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  test_mirs_img(gray)
-  print()
-  print("---------------------------------------------------------------")
-  print()
-  print("testing blackouts")
-  test_blackout_img(img)
+  # print("testing mirs")
+  # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+  # test_mirs_img(gray)
+  # print()
+  # print("---------------------------------------------------------------")
+  # print()
+  # print("testing blackouts")
+  # test_blackout_img(img)
   # print()
   # print("Second iteration of blackouts")
-  #test_modified_blackouts(img)
+  # test_modified_blackouts(img)
+  # print()
+  # print("---------------------------------------------------------------")
+  # print()
+  # print("testing mirror")
+  # test_mirror(img)
+  # print()
+  # print("---------------------------------------------------------------")
+  # print()
+  print("Testing remove diag")
+  test_remove_diag(img)
   
 
 if __name__ == "__main__":
