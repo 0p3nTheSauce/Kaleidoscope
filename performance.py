@@ -7,8 +7,8 @@ import numpy as np
 from mat import mir_p, mir_n
 from mat_original import mir_p_o, mir_n_o
 from mirror import crop_square, blackout, mirror, remove_diag_n, remove_diag_p, make_diag_n, make_diag_p
-from mirror_original import blackout_o, blackout_i, blackout_m, mirror_o, remove_diag_n_o, remove_diag_p_o, blackout_gpt, blackout_gptv2
-
+from mirror_original import blackout_o, blackout_i, blackout_m, mirror_o, remove_diag_n_o, remove_diag_p_o, blackout_gpt
+  
 def test_mirs_img(img, numiter=100):
   
   #original functions
@@ -125,7 +125,6 @@ def test_blackout_img(img, numiter=100):
   blackout time bn: 0.45001472900185036
   blackout time tn: 0.451004742000805'''
 
-  
 def test_modified_blackouts(img, numiter=100):
   cp, cpi, cpm = img.copy(), img.copy(), img.copy()
   
@@ -171,67 +170,44 @@ def test_modified_blackouts(img, numiter=100):
   blackout time bn: 0.5936000490000879
   blackout time tn: 0.6046839369992085'''
   
-def test_mirror(img, numiter=100, disp=False):
+def test_sing_mirror(img, func, title, numiter=100, disp=False):
   v, h, p, n = 0, 1, 2, 3
-  #original functions
-  o_mirrorv = mirror_o(img, v)
-  o_mirrorh = mirror_o(img, h)
-  o_mirrorp = mirror_o(img, p)
-  o_mirrorn = mirror_o(img, n)
+  
+  mirv = func(img, v)
+  mirh = func(img, h)
+  mirp = func(img, p)
+  mirn = func(img, n)
   
   if disp:
-    cv2.imshow('Original mirror v', o_mirrorv)
+    cv2.imshow(f'{title} v', mirv)
     cv2.waitKey(0)
-    cv2.imshow('Original mirror h', o_mirrorh)
+    cv2.imshow(f'{title} h', mirh)
     cv2.waitKey(0)
-    cv2.imshow('Original mirror p', o_mirrorp)
+    cv2.imshow(f'{title} p', mirp)
     cv2.waitKey(0)
-    cv2.imshow('Original mirror n', o_mirrorn)
+    cv2.imshow(f'{title} n', mirn)
     cv2.waitKey(0)
-  
-  cv2.destroyAllWindows()
-  
-  o_mirror_timev = timeit.timeit(lambda: mirror_o(img, v), number=numiter)
-  o_mirror_timeh = timeit.timeit(lambda: mirror_o(img, h), number=numiter)
-  o_mirror_timep = timeit.timeit(lambda: mirror_o(img, p), number=numiter)
-  o_mirror_timen = timeit.timeit(lambda: mirror_o(img, n), number=numiter)
+    
+    cv2.destroyAllWindows()
+    
+  mirv_time = timeit.timeit(lambda: func(img, v), number=numiter)
+  mirh_time = timeit.timeit(lambda: func(img, h), number=numiter)
+  mirp_time = timeit.timeit(lambda: func(img, p), number=numiter)
+  mirn_time = timeit.timeit(lambda: func(img, n), number=numiter)
   
   print()
-  print(f"Original mirror functions for {numiter} iterations (seconds)")
-  print(f"Original mirror time v: {o_mirror_timev}")
-  print(f"Original mirror time h: {o_mirror_timeh}")
-  print(f"Original mirror time p: {o_mirror_timep}")
-  print(f"Original mirror time n: {o_mirror_timen}")
+  print(f"{title} for {numiter} iterations (seconds)")
+  print(f"time v: {mirv_time}")
+  print(f"time h: {mirh_time}")
+  print(f"time p: {mirp_time}")
+  print(f"time n: {mirn_time}")
+  
+def test_mirror(img, numiter=100, disp=False):
+  #original functions
+  test_sing_mirror(img, mirror_o, 'Original mirror', numiter, disp)
   
   #optimized functions
-  mirrorv = mirror(img, v)
-  mirrorh = mirror(img, h)
-  mirrorp = mirror(img, p)
-  mirrorn = mirror(img, n)
-
-  if disp:
-    cv2.imshow('mirror v', mirrorv)
-    cv2.waitKey(0)
-    cv2.imshow('mirror h', mirrorh)
-    cv2.waitKey(0)
-    cv2.imshow('mirror p', mirrorp)
-    cv2.waitKey(0)
-    cv2.imshow('mirror n', mirrorn)
-    cv2.waitKey(0)
-  
-  cv2.destroyAllWindows()
-  
-  mirror_timev = timeit.timeit(lambda: mirror(img, v), number=numiter)
-  mirror_timeh = timeit.timeit(lambda: mirror(img, h), number=numiter)
-  mirror_timep = timeit.timeit(lambda: mirror(img, p), number=numiter)
-  mirror_timen = timeit.timeit(lambda: mirror(img, n), number=numiter)
-  
-  print()
-  print(f"Modified mirror functions for {numiter} iterations (seconds)")
-  print(f"mirror time v: {mirror_timev}")
-  print(f"mirror time h: {mirror_timeh}")
-  print(f"mirror time p: {mirror_timep}")
-  print(f"mirror time n: {mirror_timen}")
+  test_sing_mirror(img, mirror, 'mirror', numiter, disp)
   
   '''
   Original mirror functions for 100 iterations (seconds)
@@ -355,8 +331,8 @@ def main():
   # print()
   # print("---------------------------------------------------------------")
   # print()
-  # print("testing mirror")
-  # test_mirror(img)
+  print("testing mirror")
+  test_mirror(img, numiter=1,disp=True)
   # print()
   # print("---------------------------------------------------------------")
   # print()
@@ -365,8 +341,8 @@ def main():
   # print()
   # print("---------------------------------------------------------------")
   # print()
-  print("Testing gpt blackout")
-  test_gpt_blackout(img)
+  # print("Testing gpt blackout")
+  # test_gpt_blackout(img)
   
 
 if __name__ == "__main__":
