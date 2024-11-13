@@ -2,8 +2,6 @@
 import cv2
 import numpy as np
 import sys
-import random
-import statistics
 import sys
 from numba import njit
 #local
@@ -151,35 +149,6 @@ def neighbours_p(img, coords):
     img[x+1, y-1], img[x+1, y], img[x+1, y+1]
   ]
 
-            
-# @njit(cache=True)
-# def remove_diag_n(img):
-#   #removes diagnol lines (negative gradient) by taking the median 
-#   # of the neighbouring pixels
-#   h, w, _ = img.shape
-#   cp = img.copy()
-#   for rows in range(1, h-1):
-#     for cols in range(1, w-1):
-#       if rows == cols:
-#         k = neighbours_n(img, (rows, cols))
-#         med = med_of(k)
-#         cp[rows, cols] = med
-#   return cp
-
-# @njit(cache=True)
-# def remove_diag_p(img):
-#   #removes diagnol lines (positive gradient) by taking the median 
-#   # of the neighbouring pixels
-#   h, w, _ = img.shape
-#   cp = img.copy()
-#   for rows in range(1, h-1):
-#     for cols in range(1, w-1):
-#       if (h-rows-1) == cols:
-#         k = neighbours_p(img, (rows, cols))
-#         med = med_of(k)
-#         cp[rows, cols] = med
-#   return cp
-
 @njit(cache=True)
 def remove_diag_n(img):
   #removes diagnol lines (negative gradient) by taking the median 
@@ -253,84 +222,6 @@ def multi_mirror(img, mrs=['tn', 'tp', 'tv', 'rh'], disp=False):
       cv2.waitKey(0)
   return hm
   
-def rand_color():
-  b = random.randint(0, 255)
-  g = random.randint(0, 255)
-  r = random.randint(0, 255)
-  color = (b, g, r)
-  return color
-  
-def set_color(gray, color):
-  b, g, r = color
-  bm = gray * b
-  gm = gray * g
-  rm = gray * r
-  return cv2.merge((bm, gm, rm))
-  
-def edgey(img, time=50):
-  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  edges = cv2.Canny(gray, 100, 200)
-  colour = ((255, 255, 255))
-  for i in range(0, 255, 5):
-    for j in range(0, 255, 5):
-      edges = cv2.Canny(gray, i, j)
-      edges = set_color(edges, colour)
-      edges = text_img(edges, f'lower: {i}, upper: {j}', color=colour)
-      cv2.imshow('Edges', edges)
-      key = cv2.waitKey(time)
-      if key == 27:
-        cv2.destroyAllWindows()
-        return
-    colour = rand_color()
-  cv2.destroyAllWindows()
-  
-def edgey_sing(img, disp=False, text=False):
-  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  ns = [random.randint(0, 255) for i in range(2)]
-  ns = sorted(ns)
-  lb = ns[0]
-  ub = ns[1]
-  # lb = random.randint(0, 100)
-  # ub = random.randint(100, 255)
-  
-  edges = cv2.Canny(gray, lb, ub)
-  colour = rand_color()
-  edges = set_color(edges, colour)
-  if text:
-    edges = text_img(edges, f'lower: {lb}, upper: {ub}', color=colour)
-  if disp:
-    cv2.imshow('Edges', edges)
-    cv2.waitKey(0)
-  return edges
-  
-
-
-def text_img(img, text, disp=False ,color=(0, 255, 0)):
-  image = img.copy()
-  position = (50, 50)  # Position (x, y)
-  font = cv2.FONT_HERSHEY_SIMPLEX
-  font_scale = 1
-  # color = (0, 255, 0)  # Text color (B, G, R)
-  thickness = 2
-  line_type = cv2.LINE_AA
-
-  # Put the text on the image
-  cv2.putText(image, text, position, font, font_scale, color, thickness, line_type)
-
-  if disp:
-  # Display the image with text
-    cv2.imshow("Image with Text", image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    
-  return image
-
-
-
-
-def ident(img):
-  return img
-
 def main():
   if len(sys.argv) == 1:
     in_img = 'src_imgs/mush'
