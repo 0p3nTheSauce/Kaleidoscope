@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 import random
+import os
 
 def rotate(img, angle):
   h, w, _ = img.shape
@@ -108,6 +109,7 @@ def spin_func(img, func, params=None, iter=360, deg=1, time=50, outfolder=None):
   if outfolder is not None:
     write = True
     print(f'Writing to {outfolder}')
+    os.makedirs(outfolder, exist_ok=True)
   else:
     write = False
   for i in range(0, iter, deg):

@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import sys
 from numba import njit
+
 #local
 from mat import mir_p, mir_n
 from rot import spin_func, disk
@@ -221,27 +222,34 @@ def multi_mirror(img, mrs=['tn', 'tp', 'tv', 'rh'], disp=False):
   return hm
   
 def main():
-  if len(sys.argv) == 1:
-    in_img = 'src_imgs/mush'
-    out = 'mush'
+  in_img = ''
+  out = ''
+  out_w = 0
+  out_h = 0
+  if len(sys.argv) >= 3:
+    in_img = sys.argv[1]
+    out = sys.argv[2]  
   else:
-    # out = sys.argv[1]
-    print("this hasn't been fixed yet...")
+    print("Usage: <in_img> <out_dir> [out_width] [out_height]")
     sys.exit(1)
-  print(f'{in_img}.jpg')
+  if len(sys.argv) == 5:
+    out_w = int(sys.argv[3])
+    out_h = int(sys.argv[4])
   img = cv2.imread(f'{in_img}.jpg')
+  if out_w > 0 and out_h > 0:
+    img = cv2.resize(img, (out_w, out_h))
+  print(f'{in_img}.jpg')
   cv2.imshow('Original', img)
   cv2.waitKey(0)
   img = crop_square(img)
-  #img = cv2.resize(img, (500, 500))
   cv2.imshow('Crop squared: ', img)
   cv2.waitKey(0)
 
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
   #spin_func(img, multi_mirror, time=1, outfolder=out) #very cool
-  #spin_func(img, multi_mirror, time=1, outfolder=out)
-  spin_func(img, multi_mirror, time=1)
-  #makeVideo(out)
+  spin_func(img, multi_mirror, time=1, outfolder=out)
+  #spin_func(img, multi_mirror, time=1)
+  makeVideo(out)
   #edgey(img ,time=20)
   
   
