@@ -105,7 +105,7 @@ def disk(img):
   mask_img[mask == 255] = img[mask == 255]
   return mask_img
   
-def spin_func(img, func, params=None, iter=360, deg=1, time=50, outfolder=None, name=None):
+def spin_func(img, func, params=None, iter=360, deg=1, time=50, outfolder=None, index=0):
   if outfolder is not None:
     write = True
     print(f'Writing to {outfolder}')
@@ -120,11 +120,10 @@ def spin_func(img, func, params=None, iter=360, deg=1, time=50, outfolder=None, 
       rot = func(rot)
     cv2.imshow('Rotated', rot)
     if write:
-      cv2.imwrite(f'{outfolder}/{i}.jpg', rot)
+      cv2.imwrite(f'{outfolder}/{i+index}.jpg', rot)
     key = cv2.waitKey(time)
     if key == 27:
       break
-  cv2.destroyAllWindows()
   
   
 def main():

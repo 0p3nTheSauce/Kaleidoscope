@@ -222,12 +222,14 @@ def multi_mirror(img, mrs=['tn', 'tp', 'tv', 'rh'], disp=False):
   return hm
   
 def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
+  idx = 0
   for f in os.listdir(input_dir):
     img_path = os.path.join(input_dir, f)
     img = cv2.imread(img_path)
     img = cv2.resize(img, size)
     img = crop_square(img)
-    spin_func(img, multi_mirror, time=1, outfolder=output_dir)
+    spin_func(img, multi_mirror, time=1, outfolder=output_dir, index=idx)
+    idx += 1
   cv2.destroyAllWindows()
     
     
@@ -259,7 +261,7 @@ def main():
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
   #spin_func(img, multi_mirror, time=1, outfolder=out) #very cool
   #spin_func(img, multi_mirror, time=1)
-  # makeVideo(out)
+  #makeVideo(out)
   #edgey(img ,time=20)
   
   all_dir('src_imgs', 'all_src')
