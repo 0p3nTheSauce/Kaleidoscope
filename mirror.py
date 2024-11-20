@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import sys
 from numba import njit
-
+import os
 #local
 from mat import mir_p, mir_n
 from rot import spin_func, disk
@@ -221,41 +221,51 @@ def multi_mirror(img, mrs=['tn', 'tp', 'tv', 'rh'], disp=False):
       cv2.waitKey(0)
   return hm
   
+def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
+  for f in os.listdir(input_dir):
+    img_path = os.path.join(input_dir, f)
+    img = cv2.imread(img_path)
+    img = cv2.resize(img, size)
+    img = crop_square(img)
+    spin_func(img, multi_mirror, time=1, outfolder=output_dir)
+  cv2.destroyAllWindows()
+    
+    
+  
 def main():
-  in_img = ''
-  out = ''
-  out_w = 0
-  out_h = 0
-  if len(sys.argv) >= 3:
-    in_img = sys.argv[1]
-    out = sys.argv[2]  
-  else:
-    print("Usage: <in_img> <out_dir> [out_width] [out_height]")
-    sys.exit(1)
-  if len(sys.argv) == 5:
-    out_w = int(sys.argv[3])
-    out_h = int(sys.argv[4])
-  img = cv2.imread(f'{in_img}.jpg')
-  if out_w > 0 and out_h > 0:
-    img = cv2.resize(img, (out_w, out_h))
-  print(f'{in_img}.jpg')
-  cv2.imshow('Original', img)
-  cv2.waitKey(0)
-  img = crop_square(img)
-  cv2.imshow('Crop squared: ', img)
-  cv2.waitKey(0)
+  # in_img = ''
+  # out = ''
+  # out_w = 0
+  # out_h = 0
+  # if len(sys.argv) >= 3:
+  #   in_img = sys.argv[1]
+  #   out = sys.argv[2]  
+  # else:
+  #   print("Usage: <in_img> <out_dir> [out_width] [out_height]")
+  #   sys.exit(1)
+  # if len(sys.argv) == 5:
+  #   out_w = int(sys.argv[3])
+  #   out_h = int(sys.argv[4])
+  # img = cv2.imread(f'{in_img}.jpg')
+  # if out_w > 0 and out_h > 0:
+  #   img = cv2.resize(img, (out_w, out_h))
+  # print(f'{in_img}.jpg')
+  # cv2.imshow('Original', img)
+  # cv2.waitKey(0)
+  # img = crop_square(img)
+  # cv2.imshow('Crop squared: ', img)
+  # cv2.waitKey(0)
 
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
   #spin_func(img, multi_mirror, time=1, outfolder=out) #very cool
-  spin_func(img, multi_mirror, time=1, outfolder=out)
   #spin_func(img, multi_mirror, time=1)
-  makeVideo(out)
+  # makeVideo(out)
   #edgey(img ,time=20)
   
-  
+  all_dir('src_imgs', 'all_src')
   #hm = multi_mirror(img, disp=True)
   
-  cv2.destroyAllWindows()
+  #cv2.destroyAllWindows()
   #spin_mirror(img)
 if __name__ == '__main__':
   main()
