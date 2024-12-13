@@ -229,7 +229,7 @@ def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
     img = cv2.resize(img, size)
     img = crop_square(img)
     spin_func(img, multi_mirror, time=1, outfolder=output_dir, index=idx)
-    idx += 1
+    idx += 360
   cv2.destroyAllWindows()
     
     
@@ -264,7 +264,8 @@ def main():
   #makeVideo(out)
   #edgey(img ,time=20)
   
-  all_dir('src_imgs', 'all_src')
+  #all_dir('src_imgs', 'all_src')
+  makeVideo('all_src')
   #hm = multi_mirror(img, disp=True)
   
   #cv2.destroyAllWindows()

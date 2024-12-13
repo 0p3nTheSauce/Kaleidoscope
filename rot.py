@@ -124,6 +124,7 @@ def spin_func(img, func, params=None, iter=360, deg=1, time=50, outfolder=None, 
     key = cv2.waitKey(time)
     if key == 27:
       break
+    
   
   
 def main():

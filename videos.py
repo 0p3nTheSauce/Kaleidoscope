@@ -88,6 +88,7 @@ def main():
   else:
     print("Usage: videos.py <input_directory> [ width height ]")
     print("Example: videos.py illusion 500 500")
+    print("If width and height are not provided, the original size is used")
     sys.exit(1)
     
   
