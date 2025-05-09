@@ -71,7 +71,9 @@ def blackout_1chan(img, side):
 
   #handle diagonal lines
   if side >= 4:
-    c = h - c
+    # the next two lines are because the image vertical axis is
+    # flipped relative to the cartesian plain. 
+    c = h - c 
     m = -m
     for y in range(h):
       for x in range(w):
@@ -80,6 +82,27 @@ def blackout_1chan(img, side):
           bl[x, y] = 0
           
   return bl
+
+
+def blackout_negdiag1chan(img, side):
+  h, w = img.shape
+  bl = img.copy()
+  for y in range(h):
+    for x in range(w):
+      if side == 0: #top
+        if y < x:
+          bl[y, x] = 0
+      elif side == 1: #bottom
+        if y > x:
+          bl[y, x] = 0
+  return bl
+
+def blackout_testa(img, side):
+  b, g, r = cv2.split(img)
+  b = blackout_negdiag1chan(b, side)
+  g = blackout_negdiag1chan(g, side)
+  r = blackout_negdiag1chan(r, side)
+  return cv2.merge((b, g, r))
 
 def blackout(img, side):
   b, g, r = cv2.split(img)
@@ -236,39 +259,38 @@ def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
   
 def main():
   # in_img = ''
-  # out = ''
-  # out_w = 0
-  # out_h = 0
-  # if len(sys.argv) >= 3:
-  #   in_img = sys.argv[1]
-  #   out = sys.argv[2]  
-  # else:
-  #   print("Usage: <in_img> <out_dir> [out_width] [out_height]")
-  #   sys.exit(1)
-  # if len(sys.argv) == 5:
-  #   out_w = int(sys.argv[3])
-  #   out_h = int(sys.argv[4])
-  # img = cv2.imread(f'{in_img}.jpg')
-  # if out_w > 0 and out_h > 0:
-  #   img = cv2.resize(img, (out_w, out_h))
-  # print(f'{in_img}.jpg')
-  # cv2.imshow('Original', img)
-  # cv2.waitKey(0)
-  # img = crop_square(img)
-  # cv2.imshow('Crop squared: ', img)
-  # cv2.waitKey(0)
+  in_img = 'src_imgs/mario'
+  out = ''
+  out_w = 0
+  out_h = 0
+  if len(sys.argv) >= 3:
+    in_img = sys.argv[1]
+    out = sys.argv[2]  
+  else:
+    print("Usage: <in_img> <out_dir> [out_width] [out_height]")
+    sys.exit(1)
+  if len(sys.argv) == 5:
+    out_w = int(sys.argv[3])
+    out_h = int(sys.argv[4])
+  img = cv2.imread(f'{in_img}.png')
+  if out_w > 0 and out_h > 0:
+    img = cv2.resize(img, (out_w, out_h))
+  print(f'{in_img}.png')
+  cv2.imshow('Original', img)
+  cv2.waitKey(0)
+
 
   #spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
-  #spin_func(img, multi_mirror, time=1, outfolder=out) #very cool
-  #spin_func(img, multi_mirror, time=1)
-  #makeVideo(out)
+  spin_func(img, multi_mirror, time=1, outfolder=out) #very cool
+  # spin_func(img, multi_mirror, time=1)
+  makeVideo(out)
   #edgey(img ,time=20)
   
   #all_dir('src_imgs', 'all_src')
-  makeVideo('all_src')
+  #makeVideo('all_src')
   #hm = multi_mirror(img, disp=True)
   
-  #cv2.destroyAllWindows()
+  cv2.destroyAllWindows()
   #spin_mirror(img)
 if __name__ == '__main__':
   main()
