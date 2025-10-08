@@ -14,3 +14,5 @@ swirl/
 all_src/
 #experimental
 experimental/
+mirror_dump/
+media/
