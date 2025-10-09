@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import cv2
+from cv2.typing import MatLike
+from typing import Literal
 import numpy as np
 import sys
 from numba import njit
@@ -12,7 +14,15 @@ from rot import spin_func
 from videos import makeVideo
 
 
-def crop_square(img):
+def crop_square(img: MatLike) -> MatLike:
+    """Centre crops the largest square from an image
+
+    Args:
+        img (MatLike): Image (h, w, c).
+
+    Returns:
+        MatLike: The largest centred square crop from the original image.
+    """
     h, w, _ = img.shape
     if h > w:
         diff = h - w
@@ -24,8 +34,22 @@ def crop_square(img):
     dif2 = diff - dif1
     return img[:, dif1 : w - dif2]
 
+def mirror(img: MatLike, line: int) -> MatLike:
+    """Mirror an image along the specified line.
 
-def mirror(img, line):
+    Args:
+        img (MatLike): Image (h, w, c).
+        line (int): 0 - vertical,
+                    1 - horizontal,
+                    2 - postive incline diagnal,
+                    3 - negative incline diagnal.
+
+    Raises:
+        ValueError: If line is not one of [0,3].
+
+    Returns:
+        MatLike: Image mirrored along line.
+    """
     if line == 0:  # vertical
         return cv2.flip(img, 0)
     elif line == 1:  # horizontal
@@ -43,11 +67,31 @@ def mirror(img, line):
         r = mir_n(r)
         return cv2.merge((b, g, r))
     else:
-        print("Invalid line in mirror")
-        sys.exit(1)
+        raise ValueError(f"Provided: {line} not one of available lines: 0, 1, 2, 3")
+        
 
 @njit(cache=True)
-def blackout_1chan(img, side):
+def blackout_1chan(img: MatLike, side: int) -> MatLike:
+    """Convert all pixels to black on the specified side of the image. 
+    Works on single channel (grayscale) images.
+
+    Args:
+        img (MatLike): Image (h, w).
+        side (int): 0 - top vertical,
+                    1 - bottom vertical,
+                    2 - right horizontal,
+                    3 - left horizontal,
+                    4 - bottom positive slope,
+                    5 - top positive slope,
+                    6 - bottom negative slope,
+                    7 - top negative slope.
+
+    Raises:
+        ValueError: If side provided not one of [0,7]
+
+    Returns:
+        MatLike: Image (h, w) with pixels on one side converted to black.
+    """
     h, w = img.shape
     bl = img.copy()
     b, t = 1, 0
@@ -87,29 +131,29 @@ def blackout_1chan(img, side):
     return bl
 
 
-def blackout_negdiag1chan(img, side):
-    h, w = img.shape
-    bl = img.copy()
-    for y in range(h):
-        for x in range(w):
-            if side == 0:  # top
-                if y < x:
-                    bl[y, x] = 0
-            elif side == 1:  # bottom
-                if y > x:
-                    bl[y, x] = 0
-    return bl
+def blackout(img: MatLike, side: int) -> MatLike:
+    """Convert all pixels to black on the specified side of the image.
 
+    Args:
+        img (MatLike): Image (h, w, c)
+        side (int): 0 - top vertical,
+                    1 - bottom vertical,
+                    2 - right horizontal,
+                    3 - left horizontal,
+                    4 - bottom positive slope,
+                    5 - top positive slope,
+                    6 - bottom negative slope,
+                    7 - top negative slope.
 
-def blackout_testa(img, side):
-    b, g, r = cv2.split(img)
-    b = blackout_negdiag1chan(b, side)
-    g = blackout_negdiag1chan(g, side)
-    r = blackout_negdiag1chan(r, side)
-    return cv2.merge((b, g, r))
+    Raises:
+        ValueError: If side provided not one of [0,7]
 
-
-def blackout(img, side):
+    Returns:
+        MatLike: Image (h, w, c) with pixels on one side converted to black.
+    """
+    if side not in range(8):
+        raise ValueError(f"Side {side} not in range [0,7]")
+    
     b, g, r = cv2.split(img)
     b = blackout_1chan(b, side)
     g = blackout_1chan(g, side)
