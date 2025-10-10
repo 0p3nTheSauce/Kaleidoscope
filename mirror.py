@@ -73,7 +73,7 @@ def mirror(img: MatLike, line: int) -> MatLike:
 
 
 @njit(cache=True)
-def blackout_1chan(img: MatLike, side: int) -> MatLike:
+def blackout_1chan(img: MatLike, side: int, inplace:bool=True) -> MatLike:
     """Convert all pixels to black on the specified side of the image.
     Works on single channel (grayscale) images.
 
@@ -87,6 +87,7 @@ def blackout_1chan(img: MatLike, side: int) -> MatLike:
                     5 - top positive slope,
                     6 - bottom negative slope,
                     7 - top negative slope.
+        inplace (bool, optional): Modify image inplace. Defaults to True.
 
     Raises:
         ValueError: If side provided not one of [0,7]
@@ -95,7 +96,10 @@ def blackout_1chan(img: MatLike, side: int) -> MatLike:
         MatLike: Image (h, w) with pixels on one side converted to black.
     """
     h, w = img.shape
-    bl = img.copy()
+    if inplace:
+        bl = img
+    else:
+        bl = img.copy()
     b, t = 1, 0
     m, c, o = 0, 0, 0
     match side:
@@ -135,6 +139,7 @@ def blackout_1chan(img: MatLike, side: int) -> MatLike:
 
 def blackout(img: MatLike, side: int) -> MatLike:
     """Convert all pixels to black on the specified side of the image.
+    (Does not modify in place)
 
     Args:
         img (MatLike): Image (h, w, c) (square).
@@ -301,6 +306,15 @@ def remove_diag_p(img: MatLike) -> MatLike:
                 img[rows, cols] = med
     return img
 
+@njit(cache=True)
+def remove_horiz(img):
+    h, w = img.shape
+    centre = h // 2
+    
+    for col in range(1, w - 1):
+        img[centre, col] = med_of(neighbours(img, (centre, col)))
+
+    return img
 
 def half_mirror(img: MatLike, side: str, disp=False):
     # mirrors half the image onto the other half

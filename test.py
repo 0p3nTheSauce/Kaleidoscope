@@ -34,22 +34,23 @@ def test_crop():
 
     return sqr
 
-def test_blackout1chan():
+def test_blackout1chan(inplace):
     img = test_crop()
     
     b, g, r = cv2.split(img)
     
     for side in range(8):
     
-        nb = mirror.blackout_1chan(b, side)
-        ng = mirror.blackout_1chan(g, side)
-        nr = mirror.blackout_1chan(r, side)
+        nb = mirror.blackout_1chan(b, side, inplace)
+        ng = mirror.blackout_1chan(g, side, inplace)
+        nr = mirror.blackout_1chan(r, side, inplace)
         
         nimg = cv2.merge((nb,ng,nr))
         
         cv2.imshow(f"Blackout1chan for side: {side}", nimg)
         cv2.waitKey(0)
         
+    
 def test_blackout():
     img = test_crop()
     
@@ -93,17 +94,24 @@ def test_remove_diag_p():
 #     remd = remove_diag_p_t(img)
 #     cv2.imshow("Removed diagonal (using neighbours_n)", remd)
 #     cv2.waitKey(0)
-    
+
+
+
 def test_half_mirror():
     img = test_crop()
     side_codes = ['tv', 'bv', 'lh', 'rh', 'bp', 'tp', 'bn','tn']
-    for c in side_codes:
-        hm = mirror.half_mirror(img, c)
-        cv2.imshow("Half mirrored", hm)
-        cv2.waitKey(0)
-
+    # for c in side_codes:
+    #     hm = mirror.half_mirror(img, c)
+    #     cv2.imshow("Half mirrored", hm)
+    #     cv2.waitKey(0)
+    hm = mirror.half_mirror(img, side_codes[0], disp=True)
+    cv2.imshow("half mirror", hm) 
+    cv2.waitKey(0)
+    cv2.imshow("original", img)
+    cv2.waitKey(0)
 
 if __name__ == '__main__':
-    test_half_mirror()
+    
+    test_blackout()   
     cv2.destroyAllWindows()
         
