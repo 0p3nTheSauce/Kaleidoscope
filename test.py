@@ -71,6 +71,25 @@ def test_bo1cd():
     cv2.imshow("Blackout1chan for side: top-positive", nimg)
     cv2.waitKey(0)
     
+def test_p1cd():
+    img = test_crop()
+    
+    b, g, r = cv2.split(img)
+    
+    h, w = b.shape
+    
+    bl = (h, 0)
+    tr = (0, w)
+    
+    nb = mirror._project_1chan_diag(b, bl, tr, loc='bottom')
+    ng = mirror._project_1chan_diag(g, bl, tr, loc='bottom')
+    nr = mirror._project_1chan_diag(r, bl, tr, loc='bottom')
+    
+    nimg = cv2.merge((nb,ng,nr))
+        
+    cv2.imshow("Blackout1chan for side: top-positive", nimg)
+    cv2.waitKey(0)
+    
 def test_blackout():
     img = test_crop()
     
@@ -229,7 +248,8 @@ if __name__ == '__main__':
     # test_make_horiz()
     # test_remove_horiz()
     # test_half_mirror()
-    test_bo1cd()
+    # test_bo1cd()
+    test_p1cd()
     # test_remove_diag_p()
     cv2.destroyAllWindows()
         

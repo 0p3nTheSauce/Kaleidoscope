@@ -160,14 +160,24 @@ def _blackout_1chan_diag(
                 img[row, col] = 0
     return img
 
-
-# @njit(cache=True)
-# def blackout_1chan2(img: MatLike, side: int, inplace: bool = True) -> MatLike:
-#     h, w = img.shape
-#     if inplace:
-#         bl = img
-#     else:
-#         bl = img.copy()
+@njit(cache=True)
+def _project_1chan_diag(
+    img: MatLike,
+    start: Tuple[int, int],
+    end: Tuple[int, int],
+    loc: Literal["top", "bottom"],
+):
+    h, w = img.shape
+    cp = img.copy()
+    #temp hard code because we know positive diagonal
+    cp = mir_p(cp)
+    lpnts = lines.line_points(start, end)
+    for row in range(h):
+        for col in range(w):
+            lrow = lpnts[col]
+            if (loc == "top" and row > lrow) or (loc == "bottom" and row < lrow):
+                img[row, col] = cp[row, col]
+    return img
 
 
 def blackout(img: MatLike, side: int) -> MatLike:
