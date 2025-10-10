@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-
+from cv2.typing import MatLike
+from numba import njit
+from mirror import CV_FLIP_HORIZ, neighbours, med_of
 import timeit
 import cv2
 import numpy as np
@@ -313,11 +315,40 @@ def test_gpt_blackout(img, numiter=100):
   time tn: 1.0311045029993693
   '''
   
-
-    
-
 def test_remove_diag2(img=None):
-    from mirror import remove_diag_p, remove_diag_p_np, remove_diag_p_o
+    
+    
+    # from mirror import remove_diag_p, remove_diag_p_np, remove_diag_p_o
+    def remove_diag_p(img: MatLike) -> MatLike:
+        cv2.flip(img,CV_FLIP_HORIZ, dst=img)
+        remove_diag_n(img)
+        return cv2.flip(img, CV_FLIP_HORIZ, dst=img)
+
+    @njit(cache=True)
+    def remove_diag_p_o(img: MatLike) -> MatLike:
+        """Removes diagnol lines (positive gradient) by taking the median of the neighbouring pixel values
+
+        Args:
+            img (MatLike): Image (h, w, c) (square)
+            inplace (bool, optional): Modify image inplace. Defaults to True.
+
+        Returns:
+            MatLike: Image with diagonal line removed.
+        """
+        h, w, _ = img.shape
+        for rows in range(1, h - 1):
+            for cols in range(1, w - 1):
+                if (h - rows - 1) == cols:
+                    k = neighbours(img, (rows, cols))
+                    med = med_of(k)
+                    img[rows, cols] = med
+        return img
+
+    @njit(cache=True)
+    def remove_diag_p_np(img):
+        flipped = img[:, ::-1]  # Just creates a view, no copy
+        remove_diag_n(flipped)  # This modifies the view
+        return flipped[:, ::-1]  # Returns another view
     
     # Create test image
     if img is not None:
@@ -349,13 +380,109 @@ def test_remove_diag2(img=None):
     o_time: 1.1972437940057716
     cv_time: 1.564783494999574'''
     
+def test_remove_vert(img):
+    @njit(cache=True)
+    def _remove_horiz(remd: MatLike) -> MatLike:
+        """Remove horizontal line
 
+        Args:
+            img (MatLike): Image (h, w, c) 
+
+        Returns:
+            MatLike: Image with horizontal line removed
+        """
+        h, w, _ = remd.shape
+        centre = h // 2
+        
+        for col in range(1, w - 1):
+            remd[centre, col] = med_of(neighbours(remd, (centre, col)))
+
+        return remd
+
+    @njit(cache=True)
+    def remove_horiz(img: MatLike) -> MatLike:
+        """Remove horizontal line if Height is uneven
+
+        Args:
+            img (MatLike): _description_
+
+        Returns:
+            MatLike: _description_
+        """
+        
+        h, _, _ = img.shape
+        
+        if h % 2 == 0: #no line
+            return img 
+        else:
+            return _remove_horiz(img)
+
+    @njit(cache=True)
+    def remove_vert(img: MatLike) -> MatLike:
+        img = img.transpose(1, 0, 2)
+        remove_horiz(img)
+        return img.transpose(1, 0, 2)
+
+    @njit(cache=True)
+    def _remove_vert(remd: MatLike) -> MatLike:
+        h, w, _ = remd.shape
+        centre = w // 2
+        
+        for row in range(1, h - 1):
+            remd[row, centre] = med_of(neighbours(remd, (row, centre)))
+
+        return remd
+
+    @njit(cache=True)
+    def remove_vert_n(img:MatLike) -> MatLike:
+        _, w, _ = img.shape
+        
+        if w % 2 == 0: #no line
+            return img 
+        else:
+            return _remove_vert(img)
+    
+    # Create test image
+    
+    img_size = (1001, 1001, 3)  # Adjust size as needed
+    test_img = np.random.randint(0, 256, img_size, dtype=np.uint8)
+    numiter = 1000
+
+
+    # Warm up numba JIT
+    test_copy = test_img.copy()
+    remove_vert(test_copy)
+    remove_vert_n(test_copy)
+    remove_vert(img)
+    remove_vert_n(img)
+    
+    vert_time = timeit.timeit(lambda: remove_vert(test_copy), number=numiter)
+    vert_n_time = timeit.timeit(lambda: remove_vert_n(test_copy), number=numiter)
+    vert_time_i = timeit.timeit(lambda: remove_vert(img), number=numiter)
+    vert_n_time_i = timeit.timeit(lambda: remove_vert_n(img), number=numiter)
+    
+    print()
+    print(f"Modified remove diag functions for {numiter} iterations (seconds)")
+    print(f"vert_time: {vert_time} img.shape = {test_img.shape}")
+    print(f"vert_n_time: {vert_n_time} img.shape = {test_img.shape}")
+    print(f"vert_time: {vert_time_i} img.shape = {img.shape}")
+    print(f"vert_n_time: {vert_n_time_i} img.shape = {img.shape}")
+    
+    '''
+    Modified remove diag functions for 1000 iterations (seconds)
+    vert_time: 0.8617902740006684 img.shape = (1001, 1001, 3)
+    vert_n_time: 0.8853045420037233 img.shape = (1001, 1001, 3)
+    vert_time: 0.29470818799745757 img.shape = (375, 375, 3)
+    vert_n_time: 0.2981681710007251 img.shape = (375, 375, 3)'''
+    
+    #minimal overhead, so going with remove_vert_n for code symmetry
   
 def main():
     from test import test_crop
     img = test_crop()
     
-    test_remove_diag2()
+    # test_remove_diag2()
+    test_remove_vert(img)
     
     
 

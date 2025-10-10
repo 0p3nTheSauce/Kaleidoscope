@@ -239,13 +239,8 @@ def remove_diag_n(img: MatLike) -> MatLike:
                 img[row, col] = med
     return img
 
-def remove_diag_p(img: MatLike) -> MatLike:
-    cv2.flip(img,CV_FLIP_HORIZ, dst=img)
-    remove_diag_n(img)
-    return cv2.flip(img, CV_FLIP_HORIZ, dst=img)
-
 @njit(cache=True)
-def remove_diag_p_o(img: MatLike, inplace:bool=True) -> MatLike:
+def remove_diag_p(img: MatLike) -> MatLike:
     """Removes diagnol lines (positive gradient) by taking the median of the neighbouring pixel values
 
     Args:
@@ -263,13 +258,6 @@ def remove_diag_p_o(img: MatLike, inplace:bool=True) -> MatLike:
                 med = med_of(k)
                 img[rows, cols] = med
     return img
-
-@njit(cache=True)
-def remove_diag_p_np(img):
-    flipped = img[:, ::-1]  # Just creates a view, no copy
-    remove_diag_n(flipped)  # This modifies the view
-    return flipped[:, ::-1]  # Returns another view
-
 
 @njit(cache=True)
 def _remove_horiz(remd: MatLike) -> MatLike:
@@ -308,10 +296,24 @@ def remove_horiz(img: MatLike) -> MatLike:
         return _remove_horiz(img)
 
 @njit(cache=True)
-def remove_vert(img: MatLike) -> MatLike:
-    img = img.transpose(1, 0, 2)
-    remove_horiz(img)
-    return img.transpose(1, 0, 2)
+def _remove_vert(remd: MatLike) -> MatLike:
+    h, w, _ = remd.shape
+    centre = w // 2
+    
+    for row in range(1, h - 1):
+        remd[row, centre] = med_of(neighbours(remd, (row, centre)))
+
+    return remd
+
+@njit(cache=True)
+def remove_vert(img:MatLike) -> MatLike:
+    _, w, _ = img.shape
+    
+    if w % 2 == 0: #no line
+        return img 
+    else:
+        return _remove_vert(img)
+
 
 def half_mirror(img: MatLike, side: str, disp=False):
     # mirrors half the image onto the other half

@@ -212,7 +212,7 @@ def test_half_mirror():
     #     hm = mirror.half_mirror(img, c)
     #     cv2.imshow("Half mirrored", hm)
     #     cv2.waitKey(0)
-    hm = mirror.half_mirror(img, side_codes[2], disp=True)
+    hm = mirror.half_mirror(img, side_codes[4], disp=True)
     cv2.imshow("half mirror", hm) 
     cv2.waitKey(0)
     # cv2.imshow("original", img)
@@ -221,7 +221,7 @@ def test_half_mirror():
 if __name__ == '__main__':
     # test_make_horiz()
     # test_remove_horiz()
-    # test_half_mirror()
-    test_remove_diag_p()
+    test_half_mirror()
+    # test_remove_diag_p()
     cv2.destroyAllWindows()
         
