@@ -313,38 +313,51 @@ def test_gpt_blackout(img, numiter=100):
   time tn: 1.0311045029993693
   '''
   
-def main():
-  img = cv2.imread('src_imgs/landscape.jpg')
-  img = crop_square(img)
-  cv2.imshow('Original Image', img)
-  cv2.waitKey(0)
-  # print("testing mirs")
-  # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-  # test_mirs_img(gray)
-  # print()
-  # print("---------------------------------------------------------------")
-  # print()
-  # print("testing blackouts")
-  # test_blackout_img(img)
-  # print()
-  # print("Second iteration of blackouts")
-  # test_modified_blackouts(img)
-  # print()
-  # print("---------------------------------------------------------------")
-  # print()
-  print("testing mirror")
-  test_mirror(img, numiter=1,disp=True)
-  # print()
-  # print("---------------------------------------------------------------")
-  # print()
-  # print("Testing remove diag")
-  # test_remove_diag(img)
-  # print()
-  # print("---------------------------------------------------------------")
-  # print()
-  # print("Testing gpt blackout")
-  # test_gpt_blackout(img)
+
+    
+
+def test_remove_diag2(img=None):
+    from mirror import remove_diag_p, remove_diag_p_np, remove_diag_p_o
+    
+    # Create test image
+    if img is not None:
+        test_img = img
+    else:
+        img_size = (1000, 1000, 3)  # Adjust size as needed
+        test_img = np.random.randint(0, 256, img_size, dtype=np.uint8)
+    numiter = 1000
+
+
+    # Warm up numba JIT
+    test_copy = test_img.copy()
+    remove_diag_p_np(test_copy)
+    remove_diag_p_o(test_copy)
+    remove_diag_p(test_copy) #not necessary but why not
+    
+    np_time = timeit.timeit(lambda: remove_diag_p_np(test_copy), number=numiter)
+    o_time = timeit.timeit(lambda: remove_diag_p_o(test_copy), number=numiter)
+    cv_time = timeit.timeit(lambda: remove_diag_p(test_copy), number=numiter)
+
+    print()
+    print(f"Modified remove diag functions for {numiter} iterations (seconds)")
+    print(f"np_time: {np_time}")
+    print(f"o_time: {o_time}")
+    print(f"cv_time: {cv_time}")
+    
+    '''Modified remove diag functions for 1000 iterations (seconds)
+    np_time: 1.2462092999994638
+    o_time: 1.1972437940057716
+    cv_time: 1.564783494999574'''
+    
+
   
+def main():
+    from test import test_crop
+    img = test_crop()
+    
+    test_remove_diag2()
+    
+    
 
 if __name__ == "__main__":
   main()

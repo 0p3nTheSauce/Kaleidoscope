@@ -245,7 +245,27 @@ def remove_diag_p(img: MatLike) -> MatLike:
     return cv2.flip(img, CV_FLIP_HORIZ, dst=img)
 
 @njit(cache=True)
-def remove_diag_p_n(img):
+def remove_diag_p_o(img: MatLike, inplace:bool=True) -> MatLike:
+    """Removes diagnol lines (positive gradient) by taking the median of the neighbouring pixel values
+
+    Args:
+        img (MatLike): Image (h, w, c) (square)
+        inplace (bool, optional): Modify image inplace. Defaults to True.
+
+    Returns:
+        MatLike: Image with diagonal line removed.
+    """
+    h, w, _ = img.shape
+    for rows in range(1, h - 1):
+        for cols in range(1, w - 1):
+            if (h - rows - 1) == cols:
+                k = neighbours(img, (rows, cols))
+                med = med_of(k)
+                img[rows, cols] = med
+    return img
+
+@njit(cache=True)
+def remove_diag_p_np(img):
     flipped = img[:, ::-1]  # Just creates a view, no copy
     remove_diag_n(flipped)  # This modifies the view
     return flipped[:, ::-1]  # Returns another view
