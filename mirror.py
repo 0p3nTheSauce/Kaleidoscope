@@ -208,7 +208,16 @@ def make_diag_p(img: MatLike, colour: Tuple[int, int, int]=(0, 255, 0), disp: bo
 
 
 @njit(cache=True)
-def med_of(k):
+def med_of(k: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
+    """Calculate the median pixel value out of a list of pixel values.
+
+    Args:
+        k (List[Tuple[int, int, int]]): List of pixel values
+
+    Returns:
+        Tuple[int, int, int]: Median pixel values
+    """
+    
     # Separate channels manually for each color dimension
     r = np.array([px[0] for px in k])
     g = np.array([px[1] for px in k])
@@ -219,79 +228,44 @@ def med_of(k):
     med_g = np.median(g)
     med_b = np.median(b)
 
-    return (med_r, med_g, med_b)
-
+    return (round(med_r), round(med_g), round(med_b))
 
 @njit(cache=True)
-def neighbours_n(img: MatLike, coords: Tuple[int,int]) -> List[int]:
-    """Get the pixel values in a 3x3 kernal centered at coords.
+def neighbours(img: MatLike, coord: Tuple[int,int]) -> List[Tuple[int, int, int]]:
+    """Get the pixel values within a 3x3 square centred at coord.
 
     Args:
-        img (MatLike): _description_
-        coords (Tuple[int,int]): _description_
+        img (MatLike): Image (h, w, c).
+        coord (Tuple[int,int]): Coordinate (row, column)
 
     Returns:
-        List[int]: _description_
+        List[Tuple[int, int, int]]: Neighbouring set of pixel values (b, g, r)
     """
-    # Gets the neighbouring pixel values
-    x, y = coords
+    row, col = coord
     return [
-        img[y - 1, x - 1],
-        img[y - 1, x],
-        img[y - 1, x + 1],
-        img[y, x - 1],
-        img[y, x],
-        img[y, x + 1],
-        img[y + 1, x - 1],
-        img[y + 1, x],
-        img[y + 1, x + 1],
+        img[row - 1, col - 1],
+        img[row - 1, col],
+        img[row - 1, col + 1],
+        img[row, col - 1],
+        img[row, col],
+        img[row, col + 1],
+        img[row + 1, col - 1],
+        img[row + 1, col],
+        img[row + 1, col + 1],
     ]
-
-
-@njit(cache=True)
-def neighbours_p(img, coords):
-    # gets the neighbouring pixel values
-    x, y = coords
-    return [
-        img[x - 1, y - 1],
-        img[x - 1, y],
-        img[x - 1, y + 1],
-        img[x, y - 1],
-        img[x, y],
-        img[x, y + 1],
-        img[x + 1, y - 1],
-        img[x + 1, y],
-        img[x + 1, y + 1],
-    ]
-
 
 @njit(cache=True)
 def remove_diag_n(img):
     # removes diagnol lines (negative gradient) by taking the median
     # of the neighbouring pixels
     h, w, _ = img.shape
-    for rows in range(1, h - 1):
-        for cols in range(1, w - 1):
-            if rows == cols:
-                k = neighbours_n(img, (rows, cols))
+    for row in range(1, h - 1):
+        for col in range(1, w - 1):
+            if row == col:
+                k = neighbours(img, (row, col))
                 med = med_of(k)
-                img[rows, cols] = med
+                img[row, col] = med
     return img
-
-@njit(cache=True)
-def remove_diag_n_t(img):
-    # removes diagnol lines (negative gradient) by taking the median
-    # of the neighbouring pixels
-    h, w, _ = img.shape
-    for rows in range(1, h - 1):
-        for cols in range(1, w - 1):
-            if rows == cols:
-                k = neighbours_p(img, (rows, cols))
-                med = med_of(k)
-                img[rows, cols] = med
-    return img
-
-
 
 @njit(cache=True)
 def remove_diag_p(img):
@@ -301,24 +275,10 @@ def remove_diag_p(img):
     for rows in range(1, h - 1):
         for cols in range(1, w - 1):
             if (h - rows - 1) == cols:
-                k = neighbours_p(img, (rows, cols))
+                k = neighbours(img, (rows, cols))
                 med = med_of(k)
                 img[rows, cols] = med
     return img
-
-@njit(cache=True)
-def remove_diag_p_t(img):
-    # removes diagnol lines (positive gradient) by taking the median
-    # of the neighbouring pixels
-    h, w, _ = img.shape
-    for rows in range(1, h - 1):
-        for cols in range(1, w - 1):
-            if (h - rows - 1) == cols:
-                k = neighbours_n(img, (rows, cols))
-                med = med_of(k)
-                img[rows, cols] = med
-    return img
-
 
 def half_mirror(img, side, disp=False):
     # mirrors half the image onto the other half
