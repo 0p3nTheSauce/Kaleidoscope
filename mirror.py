@@ -73,7 +73,7 @@ def mirror(img: MatLike, line: int) -> MatLike:
 
 
 @njit(cache=True)
-def blackout_1chan(img: MatLike, side: int, inplace:bool=True) -> MatLike:
+def blackout_1chan(img: MatLike, side: int, inplace: bool = True) -> MatLike:
     """Convert all pixels to black on the specified side of the image.
     Works on single channel (grayscale) images.
 
@@ -162,14 +162,17 @@ def blackout(img: MatLike, side: int) -> MatLike:
         raise ValueError(f"Side {side} not in range [0,7]")
 
     b, g, r = cv2.split(img)
-    b = blackout_1chan(b, side)
-    g = blackout_1chan(g, side)
-    r = blackout_1chan(r, side)
+    blackout_1chan(b, side)
+    blackout_1chan(g, side)
+    blackout_1chan(r, side)
     return cv2.merge((b, g, r))
 
 
 def make_diag_n(
-    img: MatLike, colour: Tuple[int, int, int] = (0, 255, 0), disp: bool = False
+    img: MatLike,
+    colour: Tuple[int, int, int] = (0, 255, 0),
+    disp: bool = False,
+    inplace: bool = True,
 ) -> MatLike:
     """Make diagnol line from the top left corner to the bottom right corner.
 
@@ -177,24 +180,32 @@ def make_diag_n(
         img (MatLike): Image (h, w, c) (square)
         colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
         disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
+        inplace (bool, optional): Modify image inplace. Defaults to True.
 
     Returns:
         MatLike: The image with a diagonal line drawn down the negative diagonal
     """
     h, w, _ = img.shape
-    cp = img.copy()
+    if inplace:
+        diaged = img
+    else:
+        diaged = img.copy()
+
     for rows in range(h):
         for columns in range(w):
             if rows == columns:
-                cp[rows, columns] = colour
+                diaged[rows, columns] = colour
     if disp:
-        cv2.imshow("diag", cp)
+        cv2.imshow("diag", diaged)
         cv2.waitKey(0)
-    return cp
+    return diaged
 
 
 def make_diag_p(
-    img: MatLike, colour: Tuple[int, int, int] = (0, 255, 0), disp: bool = False
+    img: MatLike,
+    colour: Tuple[int, int, int] = (0, 255, 0),
+    disp: bool = False,
+    inplace: bool = True,
 ) -> MatLike:
     """Make diagnol line from the bottom left corner to the top right corner.
 
@@ -202,20 +213,25 @@ def make_diag_p(
         img (MatLike): Image (h, w, c) (square)
         colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
         disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
-
+        inplace (bool, optional): Modify image inplace. Defaults to True.
+        
     Returns:
         MatLike: The image with a diagnol line drawn down the positive diagonal
     """
     h, w, _ = img.shape
-    cp = img.copy()
+    if inplace:
+        diaged = img
+    else:
+        diaged = img.copy()
+
     for rows in range(h):
         for columns in range(w):
             if (h - 1 - rows) == columns:
-                cp[rows, columns] = colour
+                diaged[rows, columns] = colour
     if disp:
-        cv2.imshow("diag", cp)
+        cv2.imshow("diag", diaged)
         cv2.waitKey(0)
-    return cp
+    return diaged
 
 
 @njit(cache=True)
@@ -268,53 +284,66 @@ def neighbours(img: MatLike, coord: Tuple[int, int]) -> List[Tuple[int, int, int
 
 
 @njit(cache=True)
-def remove_diag_n(img: MatLike) -> MatLike:
+def remove_diag_n(img: MatLike, inplace:bool=True) -> MatLike:
     """Removes diagnol lines (negative gradient) by taking the median of the neighbouring pixel values
 
     Args:
         img (MatLike): Image (h, w, c) (square)
+        inplace (bool, optional): Modify image inplace. Defaults to True.
 
     Returns:
         MatLike: Image with diagonal line removed.
     """
     h, w, _ = img.shape
+    if inplace:
+        remd = img
+    else:
+        remd = img.copy()
+    
     for row in range(1, h - 1):
         for col in range(1, w - 1):
             if row == col:
-                k = neighbours(img, (row, col))
+                k = neighbours(remd, (row, col))
                 med = med_of(k)
-                img[row, col] = med
-    return img
+                remd[row, col] = med
+    return remd
 
 
 @njit(cache=True)
-def remove_diag_p(img: MatLike) -> MatLike:
+def remove_diag_p(img: MatLike, inplace:bool=True) -> MatLike:
     """Removes diagnol lines (positive gradient) by taking the median of the neighbouring pixel values
 
     Args:
         img (MatLike): Image (h, w, c) (square)
+        inplace (bool, optional): Modify image inplace. Defaults to True.
 
     Returns:
         MatLike: Image with diagonal line removed.
     """
     h, w, _ = img.shape
+    if inplace:
+        remd = img
+    else:
+        remd = img.copy()
     for rows in range(1, h - 1):
         for cols in range(1, w - 1):
             if (h - rows - 1) == cols:
-                k = neighbours(img, (rows, cols))
+                k = neighbours(remd, (rows, cols))
                 med = med_of(k)
-                img[rows, cols] = med
-    return img
+                remd[rows, cols] = med
+    return remd
+
 
 @njit(cache=True)
 def remove_horiz(img):
     h, w = img.shape
     centre = h // 2
-    
+
     for col in range(1, w - 1):
         img[centre, col] = med_of(neighbours(img, (centre, col)))
 
     return img
+
 
 def half_mirror(img: MatLike, side: str, disp=False):
     # mirrors half the image onto the other half
