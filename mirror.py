@@ -221,64 +221,35 @@ def neighbours(img: MatLike, coord: Tuple[int, int]) -> List[Tuple[int, int, int
 
 
 @njit(cache=True)
-def remove_diag_n(img: MatLike, inplace:bool=True) -> MatLike:
+def remove_diag_n(img: MatLike) -> MatLike:
     """Removes diagnol lines (negative gradient) by taking the median of the neighbouring pixel values
 
     Args:
         img (MatLike): Image (h, w, c) (square)
-        inplace (bool, optional): Modify image inplace. Defaults to True.
 
     Returns:
         MatLike: Image with diagonal line removed.
     """
     h, w, _ = img.shape
-    if inplace:
-        remd = img
-    else:
-        remd = img.copy()
-    
     for row in range(1, h - 1):
         for col in range(1, w - 1):
             if row == col:
-                k = neighbours(remd, (row, col))
+                k = neighbours(img, (row, col))
                 med = med_of(k)
-                remd[row, col] = med
-    return remd
+                img[row, col] = med
+    return img
 
+def remove_diag_p(img: MatLike) -> MatLike:
+    cv2.flip(img,CV_FLIP_HORIZ, dst=img)
+    remove_diag_n(img)
+    return cv2.flip(img, CV_FLIP_HORIZ, dst=img)
 
 @njit(cache=True)
-def remove_diag_p(img: MatLike, inplace:bool=True) -> MatLike:
-    """Removes diagnol lines (positive gradient) by taking the median of the neighbouring pixel values
+def remove_diag_p_n(img):
+    flipped = img[:, ::-1]  # Just creates a view, no copy
+    remove_diag_n(flipped)  # This modifies the view
+    return flipped[:, ::-1]  # Returns another view
 
-    Args:
-        img (MatLike): Image (h, w, c) (square)
-        inplace (bool, optional): Modify image inplace. Defaults to True.
-
-    Returns:
-        MatLike: Image with diagonal line removed.
-    """
-    h, w, _ = img.shape
-    if inplace:
-        remd = img
-    else:
-        remd = img.copy()
-    for rows in range(1, h - 1):
-        for cols in range(1, w - 1):
-            if (h - rows - 1) == cols:
-                k = neighbours(remd, (rows, cols))
-                med = med_of(k)
-                remd[rows, cols] = med
-    return remd
-
-
-def remove_diag_pn(img: MatLike, inplace:bool=True) -> MatLike:
-    if inplace:
-        flp = cv2.flip(img,CV_FLIP_HORIZ, dst=img)
-    else:
-        flp = cv2.flip(img,CV_FLIP_HORIZ)
-        
-    remove_diag_n(flp)
-    return cv2.flip(flp, CV_FLIP_HORIZ, dst=flp)
 
 @njit(cache=True)
 def _remove_horiz(remd: MatLike) -> MatLike:
@@ -299,12 +270,11 @@ def _remove_horiz(remd: MatLike) -> MatLike:
     return remd
 
 @njit(cache=True)
-def remove_horiz(img: MatLike, inplace:bool=True) -> MatLike:
+def remove_horiz(img: MatLike) -> MatLike:
     """Remove horizontal line if Height is uneven
 
     Args:
         img (MatLike): _description_
-        inplace (bool, optional): _description_. Defaults to True.
 
     Returns:
         MatLike: _description_
@@ -312,21 +282,16 @@ def remove_horiz(img: MatLike, inplace:bool=True) -> MatLike:
     
     h, _, _ = img.shape
     
-    if inplace:
-        remd = img
-    else:
-        remd = img.copy()
-    
     if h % 2 == 0: #no line
-        return remd 
+        return img 
     else:
-        return _remove_horiz(remd)
+        return _remove_horiz(img)
 
 @njit(cache=True)
-def remove_vert(img: MatLike, inplace:bool=True) -> MatLike:
-    trnsp = img.transpose(1, 0, 2)
-    remd = remove_horiz(trnsp, inplace)
-    return remd.transpose(1, 0, 2)
+def remove_vert(img: MatLike) -> MatLike:
+    img = img.transpose(1, 0, 2)
+    remove_horiz(img)
+    return img.transpose(1, 0, 2)
 
 def half_mirror(img: MatLike, side: str, disp=False):
     # mirrors half the image onto the other half
