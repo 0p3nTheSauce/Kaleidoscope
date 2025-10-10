@@ -149,7 +149,7 @@ def blackout(img: MatLike, side: int) -> MatLike:
         ValueError: If side provided not one of [0,7]
 
     Returns:
-        MatLike: Image (h, w, c) with pixels on one side converted to black.
+        MatLike: Image (h, w, ck) with pixels on one side converted to black.
     """
     if side not in range(8):
         raise ValueError(f"Side {side} not in range [0,7]")
