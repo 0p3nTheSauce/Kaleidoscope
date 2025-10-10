@@ -14,6 +14,9 @@ from mat import mir_p, mir_n
 from rot import spin_func
 from videos import makeVideo
 
+#constants
+CV_FLIP_VERT = 0
+CV_FLIP_HORIZ = 1
 
 def crop_square(img: MatLike) -> MatLike:
     """Centre crops the largest square from an image
@@ -53,9 +56,9 @@ def mirror(img: MatLike, line: int) -> MatLike:
         MatLike: Image mirrored along line.
     """
     if line == 0:  # vertical
-        return cv2.flip(img, 0)
+        return cv2.flip(img, CV_FLIP_VERT)
     elif line == 1:  # horizontal
-        return cv2.flip(img, 1)
+        return cv2.flip(img, CV_FLIP_HORIZ)
     elif line == 2:  # positive incline diagonal
         b, g, r = cv2.split(img)
         b = mir_p(b)
@@ -268,6 +271,15 @@ def remove_diag_p(img: MatLike, inplace:bool=True) -> MatLike:
     return remd
 
 
+def remove_diag_pn(img: MatLike, inplace:bool=True) -> MatLike:
+    if inplace:
+        flp = cv2.flip(img,CV_FLIP_HORIZ, dst=img)
+    else:
+        flp = cv2.flip(img,CV_FLIP_HORIZ)
+        
+    remove_diag_n(flp)
+    return cv2.flip(flp, CV_FLIP_HORIZ, dst=flp)
+
 @njit(cache=True)
 def _remove_horiz(remd: MatLike) -> MatLike:
     """Remove horizontal line
@@ -286,6 +298,7 @@ def _remove_horiz(remd: MatLike) -> MatLike:
 
     return remd
 
+@njit(cache=True)
 def remove_horiz(img: MatLike, inplace:bool=True) -> MatLike:
     """Remove horizontal line if Height is uneven
 
@@ -309,6 +322,7 @@ def remove_horiz(img: MatLike, inplace:bool=True) -> MatLike:
     else:
         return _remove_horiz(remd)
 
+@njit(cache=True)
 def remove_vert(img: MatLike, inplace:bool=True) -> MatLike:
     trnsp = img.transpose(1, 0, 2)
     remd = remove_horiz(trnsp, inplace)

@@ -171,12 +171,26 @@ def test_remove_diag_n():
     remd = mirror.remove_diag_n(img)
     cv2.imshow("Removed diagonal", remd)
     cv2.waitKey(0)
+    
+
 
 def test_remove_diag_p():
     img = test_make_diag_p()
     remd = mirror.remove_diag_p(img)
     cv2.imshow("Removed diagonal", remd)
     cv2.waitKey(0)
+    
+def test_remove_diag_pn():
+    img = test_make_diag_p()
+    cv2.imshow("original", img)
+    cv2.waitKey(0)
+    remd = mirror.remove_diag_pn(img, inplace=False)
+    cv2.imshow("Removed diagonal", remd)
+    cv2.waitKey(0)
+    cv2.imshow("original", img)
+    cv2.waitKey(0)
+    
+
 
 def test_remove_horiz():
     img = test_make_horiz()
@@ -207,6 +221,7 @@ def test_half_mirror():
 if __name__ == '__main__':
     # test_make_horiz()
     # test_remove_horiz()
-    test_half_mirror()
+    # test_half_mirror()
+    test_remove_diag_pn()
     cv2.destroyAllWindows()
         
