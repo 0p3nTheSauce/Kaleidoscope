@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import cv2
 from cv2.typing import MatLike
-from typing import Tuple, List
+from typing import Tuple, List, Literal
 import numpy as np
 import sys
 from numba import njit
@@ -13,10 +13,12 @@ from pathlib import Path
 from mat import mir_p, mir_n
 from rot import spin_func
 from videos import makeVideo
+import lines
 
-#constants
+# constants
 CV_FLIP_VERT = 0
 CV_FLIP_HORIZ = 1
+
 
 def crop_square(img: MatLike) -> MatLike:
     """Centre crops the largest square from an image
@@ -140,6 +142,34 @@ def blackout_1chan(img: MatLike, side: int, inplace: bool = True) -> MatLike:
     return bl
 
 
+@njit(cache=True)
+def _blackout_1chan_diag(
+    img: MatLike,
+    start: Tuple[int, int],
+    end: Tuple[int, int],
+    loc: Literal["top", "bottom"],
+):
+    h, w = img.shape
+    lpnts = lines.line_points(start, end)
+    for row in range(h):
+        for col in range(w):
+            lrow = lpnts[col]
+            if loc == "top" and row > lrow:
+                img[row, col] = 0
+            elif loc == "bottom" and row < lrow:
+                img[row, col] = 0
+    return img
+
+
+# @njit(cache=True)
+# def blackout_1chan2(img: MatLike, side: int, inplace: bool = True) -> MatLike:
+#     h, w = img.shape
+#     if inplace:
+#         bl = img
+#     else:
+#         bl = img.copy()
+
+
 def blackout(img: MatLike, side: int) -> MatLike:
     """Convert all pixels to black on the specified side of the image.
     (Does not modify in place)
@@ -239,6 +269,7 @@ def remove_diag_n(img: MatLike) -> MatLike:
                 img[row, col] = med
     return img
 
+
 @njit(cache=True)
 def remove_diag_p(img: MatLike) -> MatLike:
     """Removes diagnol lines (positive gradient) by taking the median of the neighbouring pixel values
@@ -259,23 +290,25 @@ def remove_diag_p(img: MatLike) -> MatLike:
                 img[rows, cols] = med
     return img
 
+
 @njit(cache=True)
 def _remove_horiz(remd: MatLike) -> MatLike:
     """Remove horizontal line
 
     Args:
-        img (MatLike): Image (h, w, c) 
+        img (MatLike): Image (h, w, c)
 
     Returns:
         MatLike: Image with horizontal line removed
     """
     h, w, _ = remd.shape
     centre = h // 2
-    
+
     for col in range(1, w - 1):
         remd[centre, col] = med_of(neighbours(remd, (centre, col)))
 
     return remd
+
 
 @njit(cache=True)
 def remove_horiz(img: MatLike) -> MatLike:
@@ -287,30 +320,32 @@ def remove_horiz(img: MatLike) -> MatLike:
     Returns:
         MatLike: _description_
     """
-    
+
     h, _, _ = img.shape
-    
-    if h % 2 == 0: #no line
-        return img 
+
+    if h % 2 == 0:  # no line
+        return img
     else:
         return _remove_horiz(img)
+
 
 @njit(cache=True)
 def _remove_vert(remd: MatLike) -> MatLike:
     h, w, _ = remd.shape
     centre = w // 2
-    
+
     for row in range(1, h - 1):
         remd[row, centre] = med_of(neighbours(remd, (row, centre)))
 
     return remd
 
+
 @njit(cache=True)
-def remove_vert(img:MatLike) -> MatLike:
+def remove_vert(img: MatLike) -> MatLike:
     _, w, _ = img.shape
-    
-    if w % 2 == 0: #no line
-        return img 
+
+    if w % 2 == 0:  # no line
+        return img
     else:
         return _remove_vert(img)
 

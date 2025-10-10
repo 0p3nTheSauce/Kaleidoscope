@@ -52,6 +52,24 @@ def test_blackout1chan(inplace):
         cv2.imshow(f"Blackout1chan for side: {side}", nimg)
         cv2.waitKey(0)
         
+def test_bo1cd():
+    img = test_crop()
+    
+    b, g, r = cv2.split(img)
+    
+    h, w = b.shape
+    
+    bl = (h, 0)
+    tr = (0, w)
+    
+    nb = mirror._blackout_1chan_diag(b, bl, tr, loc='top')
+    ng = mirror._blackout_1chan_diag(g, bl, tr, loc='top')
+    nr = mirror._blackout_1chan_diag(r, bl, tr, loc='top')
+    
+    nimg = cv2.merge((nb,ng,nr))
+        
+    cv2.imshow("Blackout1chan for side: top-positive", nimg)
+    cv2.waitKey(0)
     
 def test_blackout():
     img = test_crop()
@@ -173,24 +191,12 @@ def test_remove_diag_n():
     cv2.waitKey(0)
     
 
-
 def test_remove_diag_p():
     img = test_make_diag_p()
     remd = mirror.remove_diag_p(img)
     cv2.imshow("Removed diagonal", remd)
     cv2.waitKey(0)
     
-# def test_remove_diag_pn():
-#     img = test_make_diag_p()
-#     cv2.imshow("original", img)
-#     cv2.waitKey(0)
-#     remd = mirror.remove_diag_pn(img, inplace=False)
-#     cv2.imshow("Removed diagonal", remd)
-#     cv2.waitKey(0)
-#     cv2.imshow("original", img)
-#     cv2.waitKey(0)
-    
-
 
 def test_remove_horiz():
     img = test_make_horiz()
@@ -204,6 +210,7 @@ def test_remove_horiz():
     cv2.imshow("Horizontal removed", remd)
     cv2.waitKey(0)
     
+
 
 def test_half_mirror():
     img = test_crop()
@@ -221,7 +228,8 @@ def test_half_mirror():
 if __name__ == '__main__':
     # test_make_horiz()
     # test_remove_horiz()
-    test_half_mirror()
+    # test_half_mirror()
+    test_bo1cd()
     # test_remove_diag_p()
     cv2.destroyAllWindows()
         
