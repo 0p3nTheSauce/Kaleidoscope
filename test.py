@@ -194,13 +194,13 @@ def test_remove_horiz():
 def test_half_mirror():
     img = test_crop()
     side_codes = ['tv', 'bv', 'lh', 'rh', 'bp', 'tp', 'bn','tn']
-    for c in side_codes:
-        hm = mirror.half_mirror(img, c)
-        cv2.imshow("Half mirrored", hm)
-        cv2.waitKey(0)
-    # hm = mirror.half_mirror(img, side_codes[0], disp=True)
-    # cv2.imshow("half mirror", hm) 
-    # cv2.waitKey(0)
+    # for c in side_codes:
+    #     hm = mirror.half_mirror(img, c)
+    #     cv2.imshow("Half mirrored", hm)
+    #     cv2.waitKey(0)
+    hm = mirror.half_mirror(img, side_codes[2], disp=True)
+    cv2.imshow("half mirror", hm) 
+    cv2.waitKey(0)
     # cv2.imshow("original", img)
     # cv2.waitKey(0)
 

@@ -309,6 +309,10 @@ def remove_horiz(img: MatLike, inplace:bool=True) -> MatLike:
     else:
         return _remove_horiz(remd)
 
+def remove_vert(img: MatLike, inplace:bool=True) -> MatLike:
+    trnsp = img.transpose(1, 0, 2)
+    remd = remove_horiz(trnsp, inplace)
+    return remd.transpose(1, 0, 2)
 
 def half_mirror(img: MatLike, side: str, disp=False):
     # mirrors half the image onto the other half
@@ -342,6 +346,8 @@ def half_mirror(img: MatLike, side: str, disp=False):
         w = remove_diag_n(w)
     elif ln == "v":
         w = remove_horiz(w)
+    elif ln == "h":
+        w = remove_vert(w)
     return w
 
 
