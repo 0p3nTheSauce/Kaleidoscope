@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import cv2
 from cv2.typing import MatLike
-from typing import Literal
+from typing import Tuple, List
 import numpy as np
 import sys
 from numba import njit
@@ -38,11 +38,11 @@ def mirror(img: MatLike, line: int) -> MatLike:
     """Mirror an image along the specified line.
 
     Args:
-        img (MatLike): Image (h, w, c).
+        img (MatLike): Image (h, w, c) (square).
         line (int): 0 - vertical,
                     1 - horizontal,
-                    2 - postive incline diagnal,
-                    3 - negative incline diagnal.
+                    2 - postive incline diagonal,
+                    3 - negative incline diagonal.
 
     Raises:
         ValueError: If line is not one of [0,3].
@@ -76,7 +76,7 @@ def blackout_1chan(img: MatLike, side: int) -> MatLike:
     Works on single channel (grayscale) images.
 
     Args:
-        img (MatLike): Image (h, w).
+        img (MatLike): Image (h, w) (square).
         side (int): 0 - top vertical,
                     1 - bottom vertical,
                     2 - right horizontal,
@@ -135,7 +135,7 @@ def blackout(img: MatLike, side: int) -> MatLike:
     """Convert all pixels to black on the specified side of the image.
 
     Args:
-        img (MatLike): Image (h, w, c)
+        img (MatLike): Image (h, w, c) (square).
         side (int): 0 - top vertical,
                     1 - bottom vertical,
                     2 - right horizontal,
@@ -161,28 +161,46 @@ def blackout(img: MatLike, side: int) -> MatLike:
     return cv2.merge((b, g, r))
 
 
-def make_diag_n(img, color=(0, 255, 0), disp=False):
-    # make diagnol line (negative gradient)
+def make_diag_n(img: MatLike, colour: Tuple[int, int, int]=(0, 255, 0), disp: bool=False) -> MatLike:
+    """Make diagnol line from the top left corner to the bottom right corner.
+
+    Args:
+        img (MatLike): Image (h, w, c) (square)
+        colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
+        disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
+
+    Returns:
+        MatLike: The image with a diagonal line drawn down the negative diagonal
+    """
     h, w, _ = img.shape
     cp = img.copy()
     for rows in range(h):
         for columns in range(w):
             if rows == columns:
-                cp[rows, columns] = color
+                cp[rows, columns] = colour
     if disp:
         cv2.imshow("diag", cp)
         cv2.waitKey(0)
     return cp
 
 
-def make_diag_p(img, color=(0, 255, 0), disp=False):
-    # make diagnol line (negative gradient)
+def make_diag_p(img: MatLike, colour: Tuple[int, int, int]=(0, 255, 0), disp: bool=False) -> MatLike:
+    """Make diagnol line from the bottom left corner to the top right corner.
+
+    Args:
+        img (MatLike): Image (h, w, c) (square)
+        colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
+        disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
+
+    Returns:
+        MatLike: The image with a diagnol line drawn down the positive diagonal
+    """
     h, w, _ = img.shape
     cp = img.copy()
     for rows in range(h):
         for columns in range(w):
             if (h - 1 - rows) == columns:
-                cp[rows, columns] = color
+                cp[rows, columns] = colour
     if disp:
         cv2.imshow("diag", cp)
         cv2.waitKey(0)
@@ -205,7 +223,16 @@ def med_of(k):
 
 
 @njit(cache=True)
-def neighbours_n(img, coords):
+def neighbours_n(img: MatLike, coords: Tuple[int,int]) -> List[int]:
+    """Get the pixel values in a 3x3 kernal centered at coords.
+
+    Args:
+        img (MatLike): _description_
+        coords (Tuple[int,int]): _description_
+
+    Returns:
+        List[int]: _description_
+    """
     # Gets the neighbouring pixel values
     x, y = coords
     return [
@@ -251,6 +278,20 @@ def remove_diag_n(img):
                 img[rows, cols] = med
     return img
 
+@njit(cache=True)
+def remove_diag_n_t(img):
+    # removes diagnol lines (negative gradient) by taking the median
+    # of the neighbouring pixels
+    h, w, _ = img.shape
+    for rows in range(1, h - 1):
+        for cols in range(1, w - 1):
+            if rows == cols:
+                k = neighbours_p(img, (rows, cols))
+                med = med_of(k)
+                img[rows, cols] = med
+    return img
+
+
 
 @njit(cache=True)
 def remove_diag_p(img):
@@ -261,6 +302,19 @@ def remove_diag_p(img):
         for cols in range(1, w - 1):
             if (h - rows - 1) == cols:
                 k = neighbours_p(img, (rows, cols))
+                med = med_of(k)
+                img[rows, cols] = med
+    return img
+
+@njit(cache=True)
+def remove_diag_p_t(img):
+    # removes diagnol lines (positive gradient) by taking the median
+    # of the neighbouring pixels
+    h, w, _ = img.shape
+    for rows in range(1, h - 1):
+        for cols in range(1, w - 1):
+            if (h - rows - 1) == cols:
+                k = neighbours_n(img, (rows, cols))
                 med = med_of(k)
                 img[rows, cols] = med
     return img

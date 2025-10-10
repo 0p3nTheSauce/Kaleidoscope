@@ -58,8 +58,42 @@ def test_blackout():
         
         cv2.imshow(f"Blackout for side: {side}", nimg)
         cv2.waitKey(0)
+
+def test_make_diag_n():
+    img = test_crop()
+    return mirror.make_diag_n(img, disp=True)
+
+def test_make_diag_p():
+    img = test_crop()
+    return mirror.make_diag_p(img, disp=True)
+
+def test_remove_diag_n():
+    img = test_make_diag_n()
+    remd = mirror.remove_diag_n(img)
+    cv2.imshow("Removed diagonal", remd)
+    cv2.waitKey(0)
+
+def test_remove_diag_p():
+    img = test_make_diag_p()
+    remd = mirror.remove_diag_p(img)
+    cv2.imshow("Removed diagonal", remd)
+    cv2.waitKey(0)
     
+def test_remove_diag_n_t():
+    #seems to have no effect 
+    img = test_make_diag_n()
+    remd = mirror.remove_diag_n_t(img)
+    cv2.imshow("Removed diagonal (using neighbours_p)", remd)
+    cv2.waitKey(0)
+
+def test_remove_diag_p_t():
+    #flipps the added diagonal 
+    img = test_make_diag_p()
+    remd = mirror.remove_diag_p_t(img)
+    cv2.imshow("Removed diagonal (using neighbours_n)", remd)
+    cv2.waitKey(0)
+
 if __name__ == '__main__':
-    test_blackout()
+    test_remove_diag_n_t()
     cv2.destroyAllWindows()
         
