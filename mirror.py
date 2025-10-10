@@ -8,6 +8,7 @@ from numba import njit
 import os
 import argparse
 from pathlib import Path
+
 # local
 from mat import mir_p, mir_n
 from rot import spin_func
@@ -33,6 +34,7 @@ def crop_square(img: MatLike) -> MatLike:
     dif1 = diff // 2
     dif2 = diff - dif1
     return img[:, dif1 : w - dif2]
+
 
 def mirror(img: MatLike, line: int) -> MatLike:
     """Mirror an image along the specified line.
@@ -68,11 +70,11 @@ def mirror(img: MatLike, line: int) -> MatLike:
         return cv2.merge((b, g, r))
     else:
         raise ValueError(f"Provided: {line} not one of available lines: 0, 1, 2, 3")
-        
+
 
 @njit(cache=True)
 def blackout_1chan(img: MatLike, side: int) -> MatLike:
-    """Convert all pixels to black on the specified side of the image. 
+    """Convert all pixels to black on the specified side of the image.
     Works on single channel (grayscale) images.
 
     Args:
@@ -153,7 +155,7 @@ def blackout(img: MatLike, side: int) -> MatLike:
     """
     if side not in range(8):
         raise ValueError(f"Side {side} not in range [0,7]")
-    
+
     b, g, r = cv2.split(img)
     b = blackout_1chan(b, side)
     g = blackout_1chan(g, side)
@@ -161,7 +163,9 @@ def blackout(img: MatLike, side: int) -> MatLike:
     return cv2.merge((b, g, r))
 
 
-def make_diag_n(img: MatLike, colour: Tuple[int, int, int]=(0, 255, 0), disp: bool=False) -> MatLike:
+def make_diag_n(
+    img: MatLike, colour: Tuple[int, int, int] = (0, 255, 0), disp: bool = False
+) -> MatLike:
     """Make diagnol line from the top left corner to the bottom right corner.
 
     Args:
@@ -184,7 +188,9 @@ def make_diag_n(img: MatLike, colour: Tuple[int, int, int]=(0, 255, 0), disp: bo
     return cp
 
 
-def make_diag_p(img: MatLike, colour: Tuple[int, int, int]=(0, 255, 0), disp: bool=False) -> MatLike:
+def make_diag_p(
+    img: MatLike, colour: Tuple[int, int, int] = (0, 255, 0), disp: bool = False
+) -> MatLike:
     """Make diagnol line from the bottom left corner to the top right corner.
 
     Args:
@@ -217,7 +223,7 @@ def med_of(k: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
     Returns:
         Tuple[int, int, int]: Median pixel values
     """
-    
+
     # Separate channels manually for each color dimension
     r = np.array([px[0] for px in k])
     g = np.array([px[1] for px in k])
@@ -230,8 +236,9 @@ def med_of(k: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
 
     return (round(med_r), round(med_g), round(med_b))
 
+
 @njit(cache=True)
-def neighbours(img: MatLike, coord: Tuple[int,int]) -> List[Tuple[int, int, int]]:
+def neighbours(img: MatLike, coord: Tuple[int, int]) -> List[Tuple[int, int, int]]:
     """Get the pixel values within a 3x3 square centred at coord.
 
     Args:
@@ -254,10 +261,17 @@ def neighbours(img: MatLike, coord: Tuple[int,int]) -> List[Tuple[int, int, int]
         img[row + 1, col + 1],
     ]
 
+
 @njit(cache=True)
-def remove_diag_n(img):
-    # removes diagnol lines (negative gradient) by taking the median
-    # of the neighbouring pixels
+def remove_diag_n(img: MatLike) -> MatLike:
+    """Removes diagnol lines (negative gradient) by taking the median of the neighbouring pixel values
+
+    Args:
+        img (MatLike): Image (h, w, c) (square)
+
+    Returns:
+        MatLike: Image with diagonal line removed.
+    """
     h, w, _ = img.shape
     for row in range(1, h - 1):
         for col in range(1, w - 1):
@@ -267,10 +281,17 @@ def remove_diag_n(img):
                 img[row, col] = med
     return img
 
+
 @njit(cache=True)
-def remove_diag_p(img):
-    # removes diagnol lines (positive gradient) by taking the median
-    # of the neighbouring pixels
+def remove_diag_p(img: MatLike) -> MatLike:
+    """Removes diagnol lines (positive gradient) by taking the median of the neighbouring pixel values
+
+    Args:
+        img (MatLike): Image (h, w, c) (square)
+
+    Returns:
+        MatLike: Image with diagonal line removed.
+    """
     h, w, _ = img.shape
     for rows in range(1, h - 1):
         for cols in range(1, w - 1):
@@ -280,7 +301,8 @@ def remove_diag_p(img):
                 img[rows, cols] = med
     return img
 
-def half_mirror(img, side, disp=False):
+
+def half_mirror(img: MatLike, side: str, disp=False):
     # mirrors half the image onto the other half
     side_codes = {
         "tv": 0,
