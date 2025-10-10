@@ -6,7 +6,8 @@ import numpy as np
 #local imports
 from mat import mir_p, mir_n
 from old.mat_original import mir_p_o, mir_n_o
-from mirror import crop_square, blackout, mirror, remove_diag_n, remove_diag_p, make_diag_n, make_diag_p
+from mirror import crop_square, blackout, mirror, remove_diag_n, remove_diag_p
+from test import make_diag_n, make_diag_p
 from old.mirror_original import blackout_o, blackout_i, blackout_m, mirror_o, remove_diag_n_o, remove_diag_p_o, blackout_gpt
   
 def test_mirs_img(img, numiter=100):

@@ -168,72 +168,6 @@ def blackout(img: MatLike, side: int) -> MatLike:
     return cv2.merge((b, g, r))
 
 
-def make_diag_n(
-    img: MatLike,
-    colour: Tuple[int, int, int] = (0, 255, 0),
-    disp: bool = False,
-    inplace: bool = True,
-) -> MatLike:
-    """Make diagnol line from the top left corner to the bottom right corner.
-
-    Args:
-        img (MatLike): Image (h, w, c) (square)
-        colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
-        disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
-        inplace (bool, optional): Modify image inplace. Defaults to True.
-
-    Returns:
-        MatLike: The image with a diagonal line drawn down the negative diagonal
-    """
-    h, w, _ = img.shape
-    if inplace:
-        diaged = img
-    else:
-        diaged = img.copy()
-
-    for rows in range(h):
-        for columns in range(w):
-            if rows == columns:
-                diaged[rows, columns] = colour
-    if disp:
-        cv2.imshow("diag", diaged)
-        cv2.waitKey(0)
-    return diaged
-
-
-def make_diag_p(
-    img: MatLike,
-    colour: Tuple[int, int, int] = (0, 255, 0),
-    disp: bool = False,
-    inplace: bool = True,
-) -> MatLike:
-    """Make diagnol line from the bottom left corner to the top right corner.
-
-    Args:
-        img (MatLike): Image (h, w, c) (square)
-        colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
-        disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
-        inplace (bool, optional): Modify image inplace. Defaults to True.
-        
-    Returns:
-        MatLike: The image with a diagnol line drawn down the positive diagonal
-    """
-    h, w, _ = img.shape
-    if inplace:
-        diaged = img
-    else:
-        diaged = img.copy()
-
-    for rows in range(h):
-        for columns in range(w):
-            if (h - 1 - rows) == columns:
-                diaged[rows, columns] = colour
-    if disp:
-        cv2.imshow("diag", diaged)
-        cv2.waitKey(0)
-    return diaged
-
-
 @njit(cache=True)
 def med_of(k: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
     """Calculate the median pixel value out of a list of pixel values.
@@ -335,14 +269,45 @@ def remove_diag_p(img: MatLike, inplace:bool=True) -> MatLike:
 
 
 @njit(cache=True)
-def remove_horiz(img):
-    h, w = img.shape
+def _remove_horiz(remd: MatLike) -> MatLike:
+    """Remove horizontal line
+
+    Args:
+        img (MatLike): Image (h, w, c) 
+
+    Returns:
+        MatLike: Image with horizontal line removed
+    """
+    h, w, _ = remd.shape
     centre = h // 2
-
+    
     for col in range(1, w - 1):
-        img[centre, col] = med_of(neighbours(img, (centre, col)))
+        remd[centre, col] = med_of(neighbours(remd, (centre, col)))
 
-    return img
+    return remd
+
+def remove_horiz(img: MatLike, inplace:bool=True) -> MatLike:
+    """Remove horizontal line if Height is uneven
+
+    Args:
+        img (MatLike): _description_
+        inplace (bool, optional): _description_. Defaults to True.
+
+    Returns:
+        MatLike: _description_
+    """
+    
+    h, _, _ = img.shape
+    
+    if inplace:
+        remd = img
+    else:
+        remd = img.copy()
+    
+    if h % 2 == 0: #no line
+        return remd 
+    else:
+        return _remove_horiz(remd)
 
 
 def half_mirror(img: MatLike, side: str, disp=False):
@@ -375,6 +340,8 @@ def half_mirror(img: MatLike, side: str, disp=False):
         w = remove_diag_p(w)
     elif ln == "n":
         w = remove_diag_n(w)
+    elif ln == "v":
+        w = remove_horiz(w)
     return w
 
 

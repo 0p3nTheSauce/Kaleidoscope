@@ -2,6 +2,8 @@ import cv2
 import mirror
 from pathlib import Path
 from cv2.typing import MatLike
+from typing import Tuple
+import numpy as np
 
 
 def _get_ex_img(path: str = './media/Flowers.jpg') -> MatLike:
@@ -61,14 +63,108 @@ def test_blackout():
         cv2.imshow(f"Blackout for side: {side}", nimg)
         cv2.waitKey(0)
 
+def make_diag_p(
+    img: MatLike,
+    colour: Tuple[int, int, int] = (0, 255, 0),
+    disp: bool = False,
+    inplace: bool = True,
+) -> MatLike:
+    """Make diagnol line from the bottom left corner to the top right corner.
+
+    Args:
+        img (MatLike): Image (h, w, c) (square)
+        colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
+        disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
+        inplace (bool, optional): Modify image inplace. Defaults to True.
+        
+    Returns:
+        MatLike: The image with a diagnol line drawn down the positive diagonal
+    """
+    h, w, _ = img.shape
+    if inplace:
+        diaged = img
+    else:
+        diaged = img.copy()
+
+    for rows in range(h):
+        for columns in range(w):
+            if (h - 1 - rows) == columns:
+                diaged[rows, columns] = colour
+    if disp:
+        cv2.imshow("diag", diaged)
+        cv2.waitKey(0)
+    return diaged
+
+def make_diag_n(
+    img: MatLike,
+    colour: Tuple[int, int, int] = (0, 255, 0),
+    disp: bool = False,
+    inplace: bool = True,
+) -> MatLike:
+    """Make diagnol line from the top left corner to the bottom right corner.
+
+    Args:
+        img (MatLike): Image (h, w, c) (square)
+        colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
+        disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
+        inplace (bool, optional): Modify image inplace. Defaults to True.
+
+    Returns:
+        MatLike: The image with a diagonal line drawn down the negative diagonal
+    """
+    h, w, _ = img.shape
+    if inplace:
+        diaged = img
+    else:
+        diaged = img.copy()
+
+    for rows in range(h):
+        for columns in range(w):
+            if rows == columns:
+                diaged[rows, columns] = colour
+    if disp:
+        cv2.imshow("diag", diaged)
+        cv2.waitKey(0)
+    return diaged
+
+def make_horiz(
+    img: MatLike,
+    colour: Tuple[int, int, int] = (0,255,0),
+    disp: bool=False,
+    inplace: bool =True,
+) -> MatLike:
+
+    h, w, _ = img.shape
+    
+    if inplace:
+        horz = img
+    else:
+        horz = img.copy()
+        
+    centre = h // 2
+    
+    for col in range(1, w - 1):
+        horz[centre, col] = colour
+        
+    if disp:
+        cv2.imshow("Horiz", horz)
+        cv2.waitKey(0)
+
+    return horz
+
+def test_make_horiz():
+    img = test_crop()
+    make_horiz(img, disp=True)
+    return img
+
 def test_make_diag_n(inplace=True):
     img = test_crop()
-    diag = mirror.make_diag_n(img, disp=True, inplace=inplace)
+    diag = make_diag_n(img, disp=True, inplace=inplace)
     return diag
 
 def test_make_diag_p():
     img = test_crop()
-    return mirror.make_diag_p(img, disp=True)
+    return make_diag_p(img, disp=True)
 
 def test_remove_diag_n():
     img = test_make_diag_n()
@@ -81,22 +177,36 @@ def test_remove_diag_p():
     remd = mirror.remove_diag_p(img)
     cv2.imshow("Removed diagonal", remd)
     cv2.waitKey(0)
+
+def test_remove_horiz():
+    img = test_make_horiz()
+    #need to make sure that the height is uneven
+    h, w, _ = img.shape
+    print(img.shape)
+    if h % 2 == 0:
+        img = np.vstack((np.zeros(w), img ))
+    print(img.shape)
+    remd = mirror.remove_horiz(img, inplace=False)
+    cv2.imshow("Horizontal removed", remd)
+    cv2.waitKey(0)
     
+
 def test_half_mirror():
     img = test_crop()
     side_codes = ['tv', 'bv', 'lh', 'rh', 'bp', 'tp', 'bn','tn']
-    # for c in side_codes:
-    #     hm = mirror.half_mirror(img, c)
-    #     cv2.imshow("Half mirrored", hm)
-    #     cv2.waitKey(0)
-    hm = mirror.half_mirror(img, side_codes[0], disp=True)
-    cv2.imshow("half mirror", hm) 
-    cv2.waitKey(0)
-    cv2.imshow("original", img)
-    cv2.waitKey(0)
+    for c in side_codes:
+        hm = mirror.half_mirror(img, c)
+        cv2.imshow("Half mirrored", hm)
+        cv2.waitKey(0)
+    # hm = mirror.half_mirror(img, side_codes[0], disp=True)
+    # cv2.imshow("half mirror", hm) 
+    # cv2.waitKey(0)
+    # cv2.imshow("original", img)
+    # cv2.waitKey(0)
 
 if __name__ == '__main__':
-    
-    test_make_diag_n(True)
+    # test_make_horiz()
+    # test_remove_horiz()
+    test_half_mirror()
     cv2.destroyAllWindows()
         
