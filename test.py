@@ -5,8 +5,11 @@ from cv2.typing import MatLike
 from typing import Tuple
 import numpy as np
 
+# SAMPLE = './media/Flowers.jpg'
+SAMPLE = './media/ocean.jpg'
 
-def _get_ex_img(path: str = './media/Flowers.jpg') -> MatLike:
+
+def _get_ex_img(path: str = SAMPLE) -> MatLike:
     ex_p = Path(path)
     
     if not ex_p.exists():

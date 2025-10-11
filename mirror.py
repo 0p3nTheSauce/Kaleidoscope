@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 import cv2
 from cv2.typing import MatLike
 from typing import Tuple, List, Literal
@@ -475,4 +475,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_old()
