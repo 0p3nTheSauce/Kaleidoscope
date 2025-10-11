@@ -414,7 +414,7 @@ def remove_vert(img: MatLike) -> MatLike:
         return _remove_vert(img)
 
 
-def half_mirror(img: MatLike, side: str):
+def half_mirror2(img: MatLike, side: str):
      # mirrors half the image onto the other half
     side_codes = {
         "tv": 0,
@@ -436,6 +436,35 @@ def half_mirror(img: MatLike, side: str):
     r = _project_1chan(r, snum, diagonals)
     img = cv2.merge((b, g, r), dst=img)
     return img
+    
+def half_mirror(img: MatLike, side: str, disp=False):
+    # mirrors half the image onto the other half
+    side_codes = {
+        "tv": 0,
+        "bv": 1,
+        "lh": 2,
+        "rh": 3,
+        "bp": 4,
+        "tp": 5,
+        "bn": 6,
+        "tn": 7,
+    }
+    line_codes = {"v": 0, "h": 1, "p": 2, "n": 3}
+    bl = blackout(img, side_codes[side])
+    ln = side[1]
+    mr = mirror(bl, line_codes[ln])
+
+    w = cv2.addWeighted(bl, 1.0, mr, 1.0, 0)
+    if ln == "p":
+        w = remove_diag_p(w)
+    elif ln == "n":
+        w = remove_diag_n(w)
+    elif ln == "v":
+        w = remove_horiz(w)
+    elif ln == "h":
+        w = remove_vert(w)
+    return w
+
 
 def spin_mirror(img):
     cv2.imshow("Image", img)

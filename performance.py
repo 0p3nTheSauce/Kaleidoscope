@@ -8,10 +8,10 @@ import cv2
 import numpy as np
 #local imports
 from mat import mir_p, mir_n
-from old.mat_original import mir_p_o, mir_n_o
+from old.mat_0 import mir_p_o, mir_n_o
 from mirror import blackout, mirror, remove_diag_n, remove_diag_p
 from test import make_diag_n, make_diag_p
-from old.mirror_original import blackout_o, blackout_i, blackout_m, mirror_o, remove_diag_n_o, remove_diag_p_o, blackout_gpt
+from old.mirror_0 import blackout_o, blackout_i, blackout_m, mirror_o, remove_diag_n_o, remove_diag_p_o, blackout_gpt
   
 def test_mirs_img(img, numiter=100):
   
@@ -480,6 +480,65 @@ def test_remove_vert(img):
 
 def test_half_mirror(img):
     import mirror
+    import lines 
+    
+    def half_mirror2(img: MatLike, side: str):
+        # mirrors half the image onto the other half
+        side_codes = {
+            "tv": 0,
+            "bv": 1,
+            "lh": 2,
+            "rh": 3,
+            "bp": 4,
+            "tp": 5,
+            "bn": 6,
+            "tn": 7,
+        }
+        
+        b, g, r = cv2.split(img)
+        h, w = b.shape
+        snum = side_codes[side]
+        diagonals = lines.make_lines(h, w)
+        b = mirror._project_1chan(b, snum, diagonals)
+        g = mirror._project_1chan(g, snum, diagonals)
+        r = mirror._project_1chan(r, snum, diagonals)
+        img = cv2.merge((b, g, r), dst=img)
+        return img
+        
+    def half_mirror(img: MatLike, side: str, disp=False):
+        # mirrors half the image onto the other half
+        side_codes = {
+            "tv": 0,
+            "bv": 1,
+            "lh": 2,
+            "rh": 3,
+            "bp": 4,
+            "tp": 5,
+            "bn": 6,
+            "tn": 7,
+        }
+        line_codes = {"v": 0, "h": 1, "p": 2, "n": 3}
+        bl = blackout(img, side_codes[side])
+        ln = side[1]
+        mr = mirror.mirror(bl, line_codes[ln])
+
+        # if disp:
+        #     cv2.imshow("Square", img)
+        #     cv2.waitKey(0)
+        #     cv2.imshow("Blackout", bl)
+        #     cv2.waitKey(0)
+        #     cv2.imshow("Mirror", mr)
+        #     cv2.waitKey(0)
+        w = cv2.addWeighted(bl, 1.0, mr, 1.0, 0)
+        if ln == "p":
+            w = remove_diag_p(w)
+        elif ln == "n":
+            w = remove_diag_n(w)
+        elif ln == "v":
+            w = mirror.remove_horiz(w)
+        elif ln == "h":
+            w = mirror.remove_vert(w)
+        return w
     # Create test image
     
     def run_all(func, img):
@@ -497,8 +556,8 @@ def test_half_mirror(img):
     
     start = time.perf_counter()
     for code in side_codes:
-        hm2 = mirror.half_mirror2(test_img, code)
-        hm = mirror.half_mirror(test_copy, code)
+        hm2 = half_mirror2(test_img, code)
+        hm = half_mirror(test_copy, code)
         print(f"results the same for code {code}: {np.allclose(hm, hm2)}")
     elapsed = time.perf_counter() - start
     print()
@@ -506,14 +565,14 @@ def test_half_mirror(img):
     
     
     start = time.perf_counter()
-    hm_time = timeit.timeit(lambda: run_all(mirror.half_mirror, test_copy), number=numiter)
-    hm2_time = timeit.timeit(lambda: run_all(mirror.half_mirror2, test_img), number=numiter)
+    hm_time = timeit.timeit(lambda: run_all(half_mirror, test_copy), number=numiter)
+    hm2_time = timeit.timeit(lambda: run_all(half_mirror2, test_img), number=numiter)
     elapsed = time.perf_counter() - start
     print(f"Warmed up time (big): {elapsed:.6f} seconds")
     
     start = time.perf_counter()
-    hm_time_s = timeit.timeit(lambda: run_all(mirror.half_mirror, img), number=numiter)
-    hm2_time_s = timeit.timeit(lambda: run_all(mirror.half_mirror2, img), number=numiter)
+    hm_time_s = timeit.timeit(lambda: run_all(half_mirror, img), number=numiter)
+    hm2_time_s = timeit.timeit(lambda: run_all(half_mirror2, img), number=numiter)
     elapsed = time.perf_counter() - start
     print(f"Warmed up time (small): {elapsed:.6f} seconds")
     
@@ -534,15 +593,15 @@ def test_half_mirror(img):
     results the same for code bn: False
     results the same for code tn: False
 
-    Warming up time: 5.950773 seconds (decreased to 0.533034 seconds after caching)
-    Warmed up time (big): 8.759871 seconds
-    Warmed up time (small): 1.075072 seconds
+    Warming up time: 0.537394 seconds
+    Warmed up time (big): 8.739532 seconds
+    Warmed up time (small): 1.078817 seconds
 
     Running half_mirror variants for each side (8) for 125 iterations 
-    Half mirror time: 6.459962471009931 (seconds) Image size: (1001, 1001, 3)
-    Half mirror 2 time: 2.29957712101168 (seconds) Image size: (1001, 1001, 3)
-    Half mirror (small) time: 0.8349913559941342 (seconds) Image size: (375, 375, 3)
-    Half mirror 2 (small) time: 0.23972002399386838 (seconds) Image size: (375, 375, 3)
+    Half mirror time: 6.4294772959983675 (seconds) Image size: (1001, 1001, 3)
+    Half mirror 2 time: 2.309689514004276 (seconds) Image size: (1001, 1001, 3)
+    Half mirror (small) time: 0.8429876799928024 (seconds) Image size: (375, 375, 3)
+    Half mirror 2 (small) time: 0.23543725500348955 (seconds) Image size: (375, 375, 3)
     '''
 
 def main():

@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import statistics
 from numba import njit
-from old.mat_original import mir_p_o, mir_n_o
+from old.mat_0 import mir_p_o, mir_n_o
 from mirror import crop_square, blackout_1chan
     
 def blackout_o(img, line):
