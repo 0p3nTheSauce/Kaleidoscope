@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 import cv2
 from cv2.typing import MatLike
 from typing import Tuple, List, Literal
@@ -154,9 +154,7 @@ def _blackout_1chan_diag(
     for row in range(h):
         for col in range(w):
             lrow = lpnts[col]
-            if loc == "top" and row > lrow:
-                img[row, col] = 0
-            elif loc == "bottom" and row < lrow:
+            if (loc == "top" and row > lrow) or (loc == "bottom" and row < lrow) :
                 img[row, col] = 0
     return img
 
@@ -179,6 +177,20 @@ def _project_1chan_diag(
                 img[row, col] = cp[row, col]
     return img
 
+def _project_1chan(img, side, inplace=True):
+    h, w = img.shape
+    cp = img.copy()
+    match side:
+        case 0: # project top vertical -> bottom 
+            mid = h // 2
+            img[h - mid :, :] = img[:mid , :][::-1, :]
+        case 1: # project bottom vertical -> top 
+            mid = h // 2
+            img[: mid, :] = img[h - mid :, :][::-1, :]
+        case 2: #left horrizontal -> right
+            mid = w // 2
+            img[:, w - mid :] = img[:, : mid][:, ::-1]
+    return img
 
 def blackout(img: MatLike, side: int) -> MatLike:
     """Convert all pixels to black on the specified side of the image.
@@ -475,4 +487,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_old()

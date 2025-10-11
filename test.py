@@ -5,8 +5,11 @@ from cv2.typing import MatLike
 from typing import Tuple
 import numpy as np
 
+# SAMPLE = './media/Flowers.jpg'
+SAMPLE = './media/ocean.jpg'
 
-def _get_ex_img(path: str = './media/Flowers.jpg') -> MatLike:
+
+def _get_ex_img(path: str = SAMPLE) -> MatLike:
     ex_p = Path(path)
     
     if not ex_p.exists():
@@ -90,6 +93,20 @@ def test_p1cd():
     cv2.imshow("Blackout1chan for side: top-positive", nimg)
     cv2.waitKey(0)
     
+def test_p1c():
+    img = test_crop()
+    side = 2
+    b, g, r = cv2.split(img)
+
+    nb = mirror._project_1chan(b, side)
+    ng = mirror._project_1chan(g, side)
+    nr = mirror._project_1chan(r, side)
+
+    nimg = cv2.merge((nb, ng, nr))
+
+    cv2.imshow("Project1chan for side: top-vertical", nimg)
+    cv2.waitKey(0)
+
 def test_blackout():
     img = test_crop()
     
@@ -249,7 +266,7 @@ if __name__ == '__main__':
     # test_remove_horiz()
     # test_half_mirror()
     # test_bo1cd()
-    test_p1cd()
+    test_p1c()
     # test_remove_diag_p()
     cv2.destroyAllWindows()
         
