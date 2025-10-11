@@ -18,3 +18,4 @@ mirror_dump/
 media/
 mandy/
 fin1/
+.venv/
