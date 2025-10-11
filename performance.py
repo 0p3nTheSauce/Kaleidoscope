@@ -476,7 +476,9 @@ def test_remove_vert(img):
     vert_n_time: 0.2981681710007251 img.shape = (375, 375, 3)'''
     
     #minimal overhead, so going with remove_vert_n for code symmetry
-  
+
+
+
 def main():
     from test import test_crop
     img = test_crop()

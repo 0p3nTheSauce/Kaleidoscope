@@ -163,7 +163,17 @@ def _project_diag_1chan(
     img: MatLike,
     loc: Literal["top", "bottom"],
     diag: Literal["+", "-"]
-):
+) -> MatLike:
+    """Reflect one half of an image onto the other side (not inplace).
+
+    Args:
+        img (MatLike): Image (h, w)
+        loc (Literal['top', 'bottom']): Location with respect to dividing line.
+        diag (Literal['+', '-']): Sign of the diagonal gradient.
+
+    Returns:
+        MatLike: Image with 1 plane of symmetry.
+    """
     h, w = img.shape
     if diag == "+":
         mr = mir_p(img)
@@ -184,7 +194,23 @@ def _project_diag_1chan(
     return img
 
 @njit(cache=True)
-def _project_1chan(img, side, inplace=True):
+def _project_1chan(img: MatLike, side: int) -> MatLike:
+    """Reflect one half of an image onto the other side (not inplace).
+
+    Args:
+        img (MatLike): Image (h, w)
+        side (int): 0 - top half,
+                    1 - bottom half,
+                    2 - right half,
+                    3 - left half,
+                    4 - bottom positive slope,
+                    5 - top positive slope,
+                    6 - bottom negative slope,
+                    7 - top negative slope.
+
+    Returns:
+        MatLike: Image with 1 plane of symmetry.
+    """
     h, w = img.shape
     
     match side:
@@ -391,6 +417,24 @@ def remove_vert(img: MatLike) -> MatLike:
     else:
         return _remove_vert(img)
 
+
+def half_mirror2(img: MatLike, side: str, disp=False):
+     # mirrors half the image onto the other half
+    side_codes = {
+        "tv": 0,
+        "bv": 1,
+        "lh": 2,
+        "rh": 3,
+        "bp": 4,
+        "tp": 5,
+        "bn": 6,
+        "tn": 7,
+    }
+    sqr = crop_square(img)
+    b, g, r = cv2.split(sqr)
+    snum = side_codes[side]
+    _project_1chan(b, snum)
+    
 
 def half_mirror(img: MatLike, side: str, disp=False):
     # mirrors half the image onto the other half
