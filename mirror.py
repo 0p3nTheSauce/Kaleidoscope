@@ -1,7 +1,6 @@
-
 import cv2
 from cv2.typing import MatLike
-from typing import Tuple, List, Literal
+from typing import List, Literal
 import numpy as np
 import sys
 from numba import njit
@@ -78,92 +77,11 @@ def mirror(img: MatLike, line: int) -> MatLike:
 
 
 @njit(cache=True)
-def blackout_1chan(img: MatLike, side: int, inplace: bool = True) -> MatLike:
-    """Convert all pixels to black on the specified side of the image.
-    Works on single channel (grayscale) images.
-
-    Args:
-        img (MatLike): Image (h, w) (square).
-        side (int): 0 - top half,
-                    1 - bottom half,
-                    2 - right half,
-                    3 - left half,
-                    4 - bottom positive slope,
-                    5 - top positive slope,
-                    6 - bottom negative slope,
-                    7 - top negative slope.
-        inplace (bool, optional): Modify image inplace. Defaults to True.
-
-    Raises:
-        ValueError: If side provided not one of [0,7]
-
-    Returns:
-        MatLike: Image (h, w) with pixels on one side converted to black.
-    """
-    h, w = img.shape
-    if inplace:
-        bl = img
-    else:
-        bl = img.copy()
-    b, t = 1, 0
-    m, c, o = 0, 0, 0
-    match side:
-        case 0:  # top half
-            bl[: h // 2, :] = 0
-        case 1:  # bottom half
-            bl[h // 2 :, :] = 0
-        case 2:  # left half
-            bl[:, w // 2 :] = 0
-        case 3:  # right half
-            bl[:, : w // 2] = 0
-        case 4:  # bottom positive slope
-            m, c, o = 1, 0, b
-        case 5:  # top positive slope
-            m, c, o = 1, 0, t
-        case 6:  # bottom negative slope
-            m, c, o = -1, h, t
-        case 7:  # top negative slope
-            m, c, o = -1, h, b
-        case _:
-            raise ValueError("Invalid line code")
-
-    # handle diagonal lines
-    if side >= 4:
-        # the next two lines are because the image vertical axis is
-        # flipped relative to the cartesian plain.
-        c = h - c
-        m = -m
-        for y in range(h):
-            for x in range(w):
-                yl = m * x + c
-                if (o == b and y <= yl) or (o == t and y >= yl):
-                    bl[x, y] = 0
-
-    return bl
-
-
-@njit(cache=True)
-def _blackout_1chan_diag(
-    img: MatLike,
-    start: Tuple[int, int],
-    end: Tuple[int, int],
-    loc: Literal["top", "bottom"],
-):
-    h, w = img.shape
-    lpnts = lines.line_points(start, end)
-    for row in range(h):
-        for col in range(w):
-            lrow = lpnts[col]
-            if (loc == "top" and row > lrow) or (loc == "bottom" and row < lrow) :
-                img[row, col] = 0
-    return img
-
-@njit(cache=True)
 def _project_diag_1chan(
     img: MatLike,
     loc: Literal["top", "bottom"],
     diag: Literal["+", "-"],
-    lpnts: List[int]
+    lpnts: List[int],
 ) -> MatLike:
     """Reflect one half of an image onto the other side (not inplace).
 
@@ -180,7 +98,7 @@ def _project_diag_1chan(
         mr = mir_p(img)
     else:
         mr = mir_n(img)
-        
+
     for x_row in range(h):
         for x_col in range(w):
             y_row = lpnts[x_col]
@@ -189,8 +107,9 @@ def _project_diag_1chan(
                 img[x_row, x_col] = mr[x_row, x_col]
     return img
 
+
 @njit(cache=True)
-def _project_1chan(img: MatLike, side: int, diagonals:np.ndarray) -> MatLike:
+def _project_1chan(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
     """Reflect one half of an image onto the other side (not inplace).
 
     Args:
@@ -208,214 +127,35 @@ def _project_1chan(img: MatLike, side: int, diagonals:np.ndarray) -> MatLike:
         MatLike: Image with 1 plane of symmetry.
     """
     h, w = img.shape
-    
+
     match side:
-        case 0: # reflect top
+        case 0:  # reflect top
             mid = h // 2
-            img[h - mid :, :] = img[:mid , :][::-1, :]
-        case 1: # reflect bottom
+            img[h - mid :, :] = img[:mid, :][::-1, :]
+        case 1:  # reflect bottom
             mid = h // 2
-            img[: mid, :] = img[h - mid :, :][::-1, :]
-        case 2: # reflect left
+            img[:mid, :] = img[h - mid :, :][::-1, :]
+        case 2:  # reflect left
             mid = w // 2
-            img[:, w - mid :] = img[:, : mid][:, ::-1]
-        case 3: # reflect right
+            img[:, w - mid :] = img[:, :mid][:, ::-1]
+        case 3:  # reflect right
             mid = w // 2
-            img[:, : mid] = img[:, w - mid :][:, ::-1]
-        case 4: #reflect top positive slope
-            img = _project_diag_1chan(img, 'top', '+', diagonals[0])
-        case 5: #reflect bottom positive slope
-            img = _project_diag_1chan(img, 'bottom', '+', diagonals[0])
-        case 6: #reflect top negative slope
-            img = _project_diag_1chan(img, 'top', '-', diagonals[1])
-        case 7: #reflect bottom negative slope
-            img = _project_diag_1chan(img, 'bottom', '-', diagonals[1])            
+            img[:, :mid] = img[:, w - mid :][:, ::-1]
+        case 4:  # reflect top positive slope
+            img = _project_diag_1chan(img, "top", "+", diagonals[0])
+        case 5:  # reflect bottom positive slope
+            img = _project_diag_1chan(img, "bottom", "+", diagonals[0])
+        case 6:  # reflect top negative slope
+            img = _project_diag_1chan(img, "top", "-", diagonals[1])
+        case 7:  # reflect bottom negative slope
+            img = _project_diag_1chan(img, "bottom", "-", diagonals[1])
         case _:
             raise ValueError("Unsupported side code")
     return img
 
-def blackout(img: MatLike, side: int) -> MatLike:
-    """Convert all pixels to black on the specified side of the image.
-    (Does not modify in place)
-
-    Args:
-        img (MatLike): Image (h, w, c) (square).
-        side (int): 0 - top vertical,
-                    1 - bottom vertical,
-                    2 - right horizontal,
-                    3 - left horizontal,
-                    4 - bottom positive slope,
-                    5 - top positive slope,
-                    6 - bottom negative slope,
-                    7 - top negative slope.
-
-    Raises:
-        ValueError: If side provided not one of [0,7]
-
-    Returns:
-        MatLike: Image (h, w, ck) with pixels on one side converted to black.
-    """
-    if side not in range(8):
-        raise ValueError(f"Side {side} not in range [0,7]")
-
-    b, g, r = cv2.split(img)
-    blackout_1chan(b, side)
-    blackout_1chan(g, side)
-    blackout_1chan(r, side)
-    return cv2.merge((b, g, r))
-
-
-@njit(cache=True)
-def med_of(k: List[Tuple[int, int, int]]) -> Tuple[int, int, int]:
-    """Calculate the median pixel value out of a list of pixel values.
-
-    Args:
-        k (List[Tuple[int, int, int]]): List of pixel values
-
-    Returns:
-        Tuple[int, int, int]: Median pixel values
-    """
-
-    # Separate channels manually for each color dimension
-    r = np.array([px[0] for px in k])
-    g = np.array([px[1] for px in k])
-    b = np.array([px[2] for px in k])
-
-    # Find the median for each channel
-    med_r = np.median(r)
-    med_g = np.median(g)
-    med_b = np.median(b)
-
-    return (round(med_r), round(med_g), round(med_b))
-
-
-@njit(cache=True)
-def neighbours(img: MatLike, coord: Tuple[int, int]) -> List[Tuple[int, int, int]]:
-    """Get the pixel values within a 3x3 square centred at coord.
-
-    Args:
-        img (MatLike): Image (h, w, c).
-        coord (Tuple[int,int]): Coordinate (row, column)
-
-    Returns:
-        List[Tuple[int, int, int]]: Neighbouring set of pixel values (b, g, r)
-    """
-    row, col = coord
-    return [
-        img[row - 1, col - 1],
-        img[row - 1, col],
-        img[row - 1, col + 1],
-        img[row, col - 1],
-        img[row, col],
-        img[row, col + 1],
-        img[row + 1, col - 1],
-        img[row + 1, col],
-        img[row + 1, col + 1],
-    ]
-
-
-@njit(cache=True)
-def remove_diag_n(img: MatLike) -> MatLike:
-    """Removes diagnol lines (negative gradient) by taking the median of the neighbouring pixel values
-
-    Args:
-        img (MatLike): Image (h, w, c) (square)
-
-    Returns:
-        MatLike: Image with diagonal line removed.
-    """
-    h, w, _ = img.shape
-    for row in range(1, h - 1):
-        for col in range(1, w - 1):
-            if row == col:
-                k = neighbours(img, (row, col))
-                med = med_of(k)
-                img[row, col] = med
-    return img
-
-
-@njit(cache=True)
-def remove_diag_p(img: MatLike) -> MatLike:
-    """Removes diagnol lines (positive gradient) by taking the median of the neighbouring pixel values
-
-    Args:
-        img (MatLike): Image (h, w, c) (square)
-        inplace (bool, optional): Modify image inplace. Defaults to True.
-
-    Returns:
-        MatLike: Image with diagonal line removed.
-    """
-    h, w, _ = img.shape
-    for rows in range(1, h - 1):
-        for cols in range(1, w - 1):
-            if (h - rows - 1) == cols:
-                k = neighbours(img, (rows, cols))
-                med = med_of(k)
-                img[rows, cols] = med
-    return img
-
-
-@njit(cache=True)
-def _remove_horiz(remd: MatLike) -> MatLike:
-    """Remove horizontal line
-
-    Args:
-        img (MatLike): Image (h, w, c)
-
-    Returns:
-        MatLike: Image with horizontal line removed
-    """
-    h, w, _ = remd.shape
-    centre = h // 2
-
-    for col in range(1, w - 1):
-        remd[centre, col] = med_of(neighbours(remd, (centre, col)))
-
-    return remd
-
-
-@njit(cache=True)
-def remove_horiz(img: MatLike) -> MatLike:
-    """Remove horizontal line if Height is uneven
-
-    Args:
-        img (MatLike): _description_
-
-    Returns:
-        MatLike: _description_
-    """
-
-    h, _, _ = img.shape
-
-    if h % 2 == 0:  # no line
-        return img
-    else:
-        return _remove_horiz(img)
-
-
-@njit(cache=True)
-def _remove_vert(remd: MatLike) -> MatLike:
-    h, w, _ = remd.shape
-    centre = w // 2
-
-    for row in range(1, h - 1):
-        remd[row, centre] = med_of(neighbours(remd, (row, centre)))
-
-    return remd
-
-
-@njit(cache=True)
-def remove_vert(img: MatLike) -> MatLike:
-    _, w, _ = img.shape
-
-    if w % 2 == 0:  # no line
-        return img
-    else:
-        return _remove_vert(img)
-
 
 def half_mirror(img: MatLike, side: str):
-     # mirrors half the image onto the other half
+    # mirrors half the image onto the other half
     side_codes = {
         "tv": 0,
         "bv": 1,
@@ -426,7 +166,7 @@ def half_mirror(img: MatLike, side: str):
         "bn": 6,
         "tn": 7,
     }
-    
+
     b, g, r = cv2.split(img)
     h, w = b.shape
     snum = side_codes[side]
@@ -436,6 +176,7 @@ def half_mirror(img: MatLike, side: str):
     r = _project_1chan(r, snum, diagonals)
     img = cv2.merge((b, g, r), dst=img)
     return img
+
 
 def spin_mirror(img):
     cv2.imshow("Image", img)
