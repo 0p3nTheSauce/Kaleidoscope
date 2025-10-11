@@ -5,8 +5,8 @@ from cv2.typing import MatLike
 from typing import Tuple
 import numpy as np
 
-# SAMPLE = './media/Flowers.jpg'
-SAMPLE = './media/ocean.jpg'
+SAMPLE = './media/Flowers.jpg'
+# SAMPLE = './media/ocean.jpg'
 
 
 def _get_ex_img(path: str = SAMPLE) -> MatLike:
@@ -44,7 +44,7 @@ def test_blackout1chan(inplace):
     
     b, g, r = cv2.split(img)
     
-    for side in range(8):
+    for side in [0]: #range(8)
     
         nb = mirror.blackout_1chan(b, side, inplace)
         ng = mirror.blackout_1chan(g, side, inplace)
@@ -268,5 +268,6 @@ if __name__ == '__main__':
     # test_bo1cd()
     test_p1c()
     # test_remove_diag_p()
+    test_blackout1chan(True)
     cv2.destroyAllWindows()
         

@@ -179,9 +179,9 @@ def _project_1chan_diag(
 
 def _project_1chan(img, side, inplace=True):
     h, w = img.shape
-    cp = img.copy()
+    
     match side:
-        case 0: # project top vertical -> bottom 
+        case 0: # project: bottom <- top vertical 
             mid = h // 2
             img[h - mid :, :] = img[:mid , :][::-1, :]
         case 1: # project bottom vertical -> top 
@@ -190,6 +190,7 @@ def _project_1chan(img, side, inplace=True):
         case 2: #left horrizontal -> right
             mid = w // 2
             img[:, w - mid :] = img[:, : mid][:, ::-1]
+        
     return img
 
 def blackout(img: MatLike, side: int) -> MatLike:

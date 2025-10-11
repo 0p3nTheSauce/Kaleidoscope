@@ -15,7 +15,8 @@ all_src/
 #experimental
 experimental/
 mirror_dump/
-media/
 mandy/
 fin1/
 .venv/
+media/*
+!media/Flowers.jpg
