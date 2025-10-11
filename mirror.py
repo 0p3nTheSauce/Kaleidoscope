@@ -230,7 +230,7 @@ def main_old():
     if len(sys.argv) == 5:
         out_w = int(sys.argv[3])
         out_h = int(sys.argv[4])
-    img = cv2.imread(f"{in_img}.png")
+    img = cv2.imread(in_img)
     if out_w > 0 and out_h > 0:
         img = cv2.resize(img, (out_w, out_h))
     print(f"{in_img}.png")
