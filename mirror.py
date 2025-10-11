@@ -14,7 +14,7 @@ from mat import mir_p, mir_n
 from rot import spin_func
 from videos import makeVideo
 import lines
-#
+
 # constants
 CV_FLIP_VERT = 0
 CV_FLIP_HORIZ = 1
