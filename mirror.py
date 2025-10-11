@@ -159,48 +159,31 @@ def _blackout_1chan_diag(
     return img
 
 @njit(cache=True)
-def _project_1chan_diag(
-    img: MatLike,
-    start: Tuple[int, int],
-    end: Tuple[int, int],
-    loc: Literal["top", "bottom"],
-):
-    h, w = img.shape
-    cp = img.copy()
-    #temp hard code because we know positive diagonal
-    cp = mir_p(cp)
-    lpnts = lines.line_points(start, end)
-    for row in range(h):
-        for col in range(w):
-            lrow = lpnts[col]
-            if (loc == "top" and row > lrow) or (loc == "bottom" and row < lrow):
-                img[row, col] = cp[row, col]
-    return img
-
 def _project_diag_1chan(
     img: MatLike,
-    start: Tuple[int, int],
-    end: Tuple[int, int],
     loc: Literal["top", "bottom"],
     diag: Literal["+", "-"]
 ):
     h, w = img.shape
     if diag == "+":
         mr = mir_p(img)
+        start = (h, 0) #bottom-left
+        end = (0, w) #top-right
     else:
         mr = mir_n(img)
-        # mr = img
+        start = (0,0) #top-left
+        end = (h, w) #bottom-right
+        
     lpnts = lines.line_points(start, end)
     for x_row in range(h):
         for x_col in range(w):
             y_row = lpnts[x_col]
             # reflect the loc
-            if diag == "+" and ((loc == "top" and x_row > y_row) or (loc == "bottom" and x_row < y_row)):
-                img[x_row, x_col] = mr[x_row, x_col]
-            elif diag == "-" and ((loc == "top" and x_row > y_row) or (loc == "bottom" and x_row < y_row)):
+            if (loc == "top" and x_row > y_row) or (loc == "bottom" and x_row < y_row):
                 img[x_row, x_col] = mr[x_row, x_col]
     return img
 
+@njit(cache=True)
 def _project_1chan(img, side, inplace=True):
     h, w = img.shape
     
@@ -218,11 +201,15 @@ def _project_1chan(img, side, inplace=True):
             mid = w // 2
             img[:, : mid] = img[:, w - mid :][:, ::-1]
         case 4: #reflect top positive slope
-            bl = (h, 0) #bottom-left
-            tr = (0, w) #top-right 
-            
-            
-            
+            img = _project_diag_1chan(img, 'top', '+')
+        case 5: #reflect bottom positive slope
+            img = _project_diag_1chan(img, 'bottom', '+')
+        case 6: #reflect top negative slope
+            img = _project_diag_1chan(img, 'top', '-')
+        case 7: #reflect bottom negative slope
+            img = _project_diag_1chan(img, 'bottom', '-')            
+        case _:
+            raise ValueError("Unsupported side code")
     return img
 
 def blackout(img: MatLike, side: int) -> MatLike:

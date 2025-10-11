@@ -2,8 +2,11 @@ import cv2
 import mirror
 from pathlib import Path
 from cv2.typing import MatLike
-from typing import Tuple
+from typing import Tuple, Literal
 import numpy as np
+
+import mat
+import lines
 
 SAMPLE = './media/Flowers.jpg'
 
@@ -71,25 +74,27 @@ def test_bo1cd():
         
     cv2.imshow("Blackout1chan for side: top-positive", nimg)
     cv2.waitKey(0)
-    
-def test_p1cd():
-    img = test_crop()
-    
-    b, g, r = cv2.split(img)
-    
-    h, w = b.shape
-    
-    bl = (h, 0)
-    tr = (0, w)
-    
-    nb = mirror._project_1chan_diag(b, bl, tr, loc='top')
-    ng = mirror._project_1chan_diag(g, bl, tr, loc='top')
-    nr = mirror._project_1chan_diag(r, bl, tr, loc='top')
-    
-    nimg = cv2.merge((nb,ng,nr))
-        
-    cv2.imshow("Blackout1chan for side: top-positive", nimg)
-    cv2.waitKey(0)
+
+def _project_diag_1chan(
+    img: MatLike,
+    start: Tuple[int, int],
+    end: Tuple[int, int],
+    loc: Literal["top", "bottom"],
+    diag: Literal["+", "-"]
+):
+    h, w = img.shape
+    if diag == "+":
+        mr = mat.mir_p(img)
+    else:
+        mr = mat.mir_n(img)
+    lpnts = lines.line_points(start, end)
+    for x_row in range(h):
+        for x_col in range(w):
+            y_row = lpnts[x_col]
+            # reflect the loc
+            if (loc == "top" and x_row > y_row) or (loc == "bottom" and x_row < y_row):
+                img[x_row, x_col] = mr[x_row, x_col]
+    return img
 
 def test_pd1c():
     print('here')
@@ -105,9 +110,9 @@ def test_pd1c():
     tl = (0, 0)
     br = (h, w)
     
-    mirror._project_diag_1chan(b, bl, tr, loc='top', diag="+")
-    mirror._project_diag_1chan(g, bl, tr, loc='top', diag="+")
-    mirror._project_diag_1chan(r, bl, tr, loc='top', diag="+")
+    _project_diag_1chan(b, bl, tr, loc='top', diag="+")
+    _project_diag_1chan(g, bl, tr, loc='top', diag="+")
+    _project_diag_1chan(r, bl, tr, loc='top', diag="+")
     nimg = cv2.merge((b,g,r))
     
     cv2.imshow("Blackout1chan for side: top-postive", nimg)
@@ -115,9 +120,9 @@ def test_pd1c():
     
     b, g, r = cv2.split(img)
     
-    mirror._project_diag_1chan(b, bl, tr, loc='bottom', diag="+")
-    mirror._project_diag_1chan(g, bl, tr, loc='bottom', diag="+")
-    mirror._project_diag_1chan(r, bl, tr, loc='bottom', diag="+")
+    _project_diag_1chan(b, bl, tr, loc='bottom', diag="+")
+    _project_diag_1chan(g, bl, tr, loc='bottom', diag="+")
+    _project_diag_1chan(r, bl, tr, loc='bottom', diag="+")
     nimg = cv2.merge((b,g,r))
     
     cv2.imshow("Blackout1chan for side: bottom-postive", nimg)
@@ -125,9 +130,9 @@ def test_pd1c():
     
     b, g, r = cv2.split(img)
     
-    mirror._project_diag_1chan(b, tl, br, loc='top', diag="-")
-    mirror._project_diag_1chan(g, tl, br, loc='top', diag="-")
-    mirror._project_diag_1chan(r, tl, br, loc='top', diag="-")
+    _project_diag_1chan(b, tl, br, loc='top', diag="-")
+    _project_diag_1chan(g, tl, br, loc='top', diag="-")
+    _project_diag_1chan(r, tl, br, loc='top', diag="-")
     nimg = cv2.merge((b,g,r))
     
     cv2.imshow("Blackout1chan for side: top-negative", nimg)
@@ -135,17 +140,17 @@ def test_pd1c():
     
     b, g, r = cv2.split(img)
     
-    mirror._project_diag_1chan(b, tl, br, loc='bottom', diag="-")
-    mirror._project_diag_1chan(g, tl, br, loc='bottom', diag="-")
-    mirror._project_diag_1chan(r, tl, br, loc='bottom', diag="-")
+    _project_diag_1chan(b, tl, br, loc='bottom', diag="-")
+    _project_diag_1chan(g, tl, br, loc='bottom', diag="-")
+    _project_diag_1chan(r, tl, br, loc='bottom', diag="-")
     nimg = cv2.merge((b,g,r))
     
     cv2.imshow("Blackout1chan for side: bottom-negative", nimg)
     cv2.waitKey(0)
 
-def test_p1c():
+def test_p1c(side=0):
     img = test_crop()
-    side = 3
+
     b, g, r = cv2.split(img)
 
     nb = mirror._project_1chan(b, side)
@@ -154,7 +159,18 @@ def test_p1c():
 
     nimg = cv2.merge((nb, ng, nr))
 
-    cv2.imshow("Project1chan for side: top-vertical", nimg)
+    side_codes = {
+        0 : "top",
+        1 : "bottom",
+        2 : "left", 
+        3 : "right",
+        4 : "top +slope",
+        5 : "bottom +slope",
+        6 : "top -slope",
+        7 : "bottom -slope" 
+    }
+
+    cv2.imshow(f"Project1chan for side: {side_codes[side]}", nimg)
     cv2.waitKey(0)
 
 def test_blackout():
@@ -312,11 +328,13 @@ def test_half_mirror():
     # cv2.waitKey(0)
 
 if __name__ == '__main__':
+    import sys
     # test_make_horiz()
     # test_remove_horiz()
     # test_half_mirror()
     # test_bo1cd()
-    test_pd1c()
+    # test_pd1c()
+    test_p1c(int(sys.argv[1]))
     # test_remove_diag_p()
     # test_blackout1chan()
     cv2.destroyAllWindows()
