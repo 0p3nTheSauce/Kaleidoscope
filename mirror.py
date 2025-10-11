@@ -181,11 +181,15 @@ def _project_1chan(img, side, inplace=True):
     h, w = img.shape
     cp = img.copy()
     match side:
-        case 0: # top vertical 
-            # flp = cv2.flip(img, CV_FLIP_VERT)  #do we even need to flip?
+        case 0: # project top vertical -> bottom 
+            mid = h // 2
+            img[h - mid :, :] = img[:mid , :][::-1, :]
+        case 1: # project bottom vertical -> top 
             mid = h // 2
             img[: mid, :] = img[h - mid :, :][::-1, :]
-
+        case 2: #left horrizontal -> right
+            mid = w // 2
+            img[:, w - mid :] = img[:, : mid][:, ::-1]
     return img
 
 def blackout(img: MatLike, side: int) -> MatLike:

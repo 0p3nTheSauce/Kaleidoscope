@@ -95,11 +95,12 @@ def test_p1cd():
     
 def test_p1c():
     img = test_crop()
+    side = 2
     b, g, r = cv2.split(img)
 
-    nb = mirror._project_1chan(b, 0)
-    ng = mirror._project_1chan(g, 0)
-    nr = mirror._project_1chan(r, 0)
+    nb = mirror._project_1chan(b, side)
+    ng = mirror._project_1chan(g, side)
+    nr = mirror._project_1chan(r, side)
 
     nimg = cv2.merge((nb, ng, nr))
 
