@@ -81,9 +81,9 @@ def test_p1cd():
     bl = (h, 0)
     tr = (0, w)
     
-    nb = mirror._project_1chan_diag(b, bl, tr, loc='bottom')
-    ng = mirror._project_1chan_diag(g, bl, tr, loc='bottom')
-    nr = mirror._project_1chan_diag(r, bl, tr, loc='bottom')
+    nb = mirror._project_1chan_diag(b, bl, tr, loc='top')
+    ng = mirror._project_1chan_diag(g, bl, tr, loc='top')
+    nr = mirror._project_1chan_diag(r, bl, tr, loc='top')
     
     nimg = cv2.merge((nb,ng,nr))
         
