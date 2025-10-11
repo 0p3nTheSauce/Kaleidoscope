@@ -84,10 +84,10 @@ def blackout_1chan(img: MatLike, side: int, inplace: bool = True) -> MatLike:
 
     Args:
         img (MatLike): Image (h, w) (square).
-        side (int): 0 - top vertical,
-                    1 - bottom vertical,
-                    2 - right horizontal,
-                    3 - left horizontal,
+        side (int): 0 - top half,
+                    1 - bottom half,
+                    2 - right half,
+                    3 - left half,
                     4 - bottom positive slope,
                     5 - top positive slope,
                     6 - bottom negative slope,
@@ -108,13 +108,13 @@ def blackout_1chan(img: MatLike, side: int, inplace: bool = True) -> MatLike:
     b, t = 1, 0
     m, c, o = 0, 0, 0
     match side:
-        case 0:  # top vertical
-            bl[h // 2 :, :] = 0
-        case 1:  # bottom vertical
+        case 0:  # top half
             bl[: h // 2, :] = 0
-        case 2:  # left horizontal
+        case 1:  # bottom half
+            bl[h // 2 :, :] = 0
+        case 2:  # left half
             bl[:, w // 2 :] = 0
-        case 3:  # right horizontal
+        case 3:  # right half
             bl[:, : w // 2] = 0
         case 4:  # bottom positive slope
             m, c, o = 1, 0, b
@@ -181,16 +181,18 @@ def _project_1chan(img, side, inplace=True):
     h, w = img.shape
     
     match side:
-        case 0: # project: bottom <- top vertical 
+        case 0: # reflect top
             mid = h // 2
             img[h - mid :, :] = img[:mid , :][::-1, :]
-        case 1: # project bottom vertical -> top 
+        case 1: # reflect bottom
             mid = h // 2
             img[: mid, :] = img[h - mid :, :][::-1, :]
-        case 2: #left horrizontal -> right
+        case 2: # reflect left
             mid = w // 2
             img[:, w - mid :] = img[:, : mid][:, ::-1]
-        
+        case 3: # reflect right
+            mid = w // 2
+            img[:, : mid] = img[:, w - mid :][:, ::-1]
     return img
 
 def blackout(img: MatLike, side: int) -> MatLike:

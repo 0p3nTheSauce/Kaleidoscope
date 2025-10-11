@@ -6,8 +6,6 @@ from typing import Tuple
 import numpy as np
 
 SAMPLE = './media/Flowers.jpg'
-# SAMPLE = './media/ocean.jpg'
-
 
 def _get_ex_img(path: str = SAMPLE) -> MatLike:
     ex_p = Path(path)
@@ -39,12 +37,12 @@ def test_crop():
 
     return sqr
 
-def test_blackout1chan(inplace):
+def test_blackout1chan(inplace=False):
     img = test_crop()
     
     b, g, r = cv2.split(img)
     
-    for side in [0]: #range(8)
+    for side in [4]:
     
         nb = mirror.blackout_1chan(b, side, inplace)
         ng = mirror.blackout_1chan(g, side, inplace)
@@ -95,7 +93,7 @@ def test_p1cd():
     
 def test_p1c():
     img = test_crop()
-    side = 2
+    side = 3
     b, g, r = cv2.split(img)
 
     nb = mirror._project_1chan(b, side)
@@ -268,6 +266,6 @@ if __name__ == '__main__':
     # test_bo1cd()
     test_p1c()
     # test_remove_diag_p()
-    test_blackout1chan(True)
+    # test_blackout1chan()
     cv2.destroyAllWindows()
         
