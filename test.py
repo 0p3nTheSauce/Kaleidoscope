@@ -148,14 +148,17 @@ def test_pd1c():
     cv2.imshow("Blackout1chan for side: bottom-negative", nimg)
     cv2.waitKey(0)
 
+
 def test_p1c(side=0):
     img = test_crop()
 
     b, g, r = cv2.split(img)
+    h, w = b.shape
+    diagonals = lines.make_lines(h, w)
 
-    nb = mirror._project_1chan(b, side)
-    ng = mirror._project_1chan(g, side)
-    nr = mirror._project_1chan(r, side)
+    nb = mirror._project_1chan(b, side, diagonals)
+    ng = mirror._project_1chan(g, side, diagonals)
+    nr = mirror._project_1chan(r, side, diagonals)
 
     nimg = cv2.merge((nb, ng, nr))
 

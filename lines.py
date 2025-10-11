@@ -2,24 +2,28 @@
 
 import cv2
 import numpy as np
-import math
-from typing import Tuple, Dict
+from typing import Tuple
 from numba import njit
 
 @njit(cache=True)
-def line_points(start: Tuple[int, int], end: Tuple[int, int]) -> Dict[int, int]:
-    """Generate a dictionary of coordinates on a line. Uses the Bresenhams line algorithm. Uses cv style coordinate indexing (bottom right corner = (h, w))
+def line_points(start: Tuple[int, int], end: Tuple[int, int]) -> np.ndarray:
+    """Generate a dictionary of coordinates on a line. Uses the Bresenhams line algorithm. 
+    Uses cv style coordinate indexing (bottom right corner = (h, w))
 
     Args:
         start (Tuple[int, int]): Starting coordinate
         end (Tuple[int, int]): Final coordinate
 
     Returns:
-        Dict[int, int]: Hashmap of col : row pairs.
+        np.ndarray: Index with column index to get row index.
     """
-    edge = {}
     row1, col1 = start
     row2, col2 = end
+    
+    # Determine the size needed
+    max_col = max(col1, col2)
+    edge = np.zeros(max_col + 1, dtype=np.int64)
+    
     dx = abs(row2 - row1)
     dy = abs(col2 - col1)
     if row1 < row2:
@@ -31,6 +35,7 @@ def line_points(start: Tuple[int, int], end: Tuple[int, int]) -> Dict[int, int]:
     else:
         sy = -1
     err = dx - dy
+    
     while True:
         edge[col1] = row1
         if row1 == row2 and col1 == col2:
@@ -44,6 +49,27 @@ def line_points(start: Tuple[int, int], end: Tuple[int, int]) -> Dict[int, int]:
             col1 = col1 + sy
     return edge
 
+def make_lines(h: int,w: int ) -> np.ndarray:
+    """Premake the positive and negative diagonal lines for half_mirror
+
+    Args:
+        h (int): Image height
+        w (int): Image width
+        
+
+    Returns:
+        Dict[str, List[int]]: '+' for positive diagonal, '-' for negative. The line indexed with column returns row
+    """
+    tl = (0,0)
+    tr = (0, w)
+    bl = (h, 0)
+    br = (h, w)
+    
+    pos_diag = line_points(bl, tr)
+    neg_diag = line_points(tl, br)
+    return np.vstack((pos_diag, neg_diag))
+    
+    
 
 def bresenham_line(start, end, screen, colour=(0, 0, 0), speed=100, slowness=1):
     """draw a line from start to end on the screen"""
@@ -100,7 +126,7 @@ def main():
     cv2.imshow("bresenham", blank)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    lpts = line_points(start, end)
+    
 
 if __name__ == "__main__":
     main()

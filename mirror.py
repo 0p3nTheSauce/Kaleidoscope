@@ -6,8 +6,8 @@ import numpy as np
 import sys
 from numba import njit
 import os
-import argparse
-from pathlib import Path
+# import argparse
+# from pathlib import Path
 
 # local
 from mat import mir_p, mir_n
@@ -162,7 +162,8 @@ def _blackout_1chan_diag(
 def _project_diag_1chan(
     img: MatLike,
     loc: Literal["top", "bottom"],
-    diag: Literal["+", "-"]
+    diag: Literal["+", "-"],
+    lpnts: List[int]
 ) -> MatLike:
     """Reflect one half of an image onto the other side (not inplace).
 
@@ -177,14 +178,9 @@ def _project_diag_1chan(
     h, w = img.shape
     if diag == "+":
         mr = mir_p(img)
-        start = (h, 0) #bottom-left
-        end = (0, w) #top-right
     else:
         mr = mir_n(img)
-        start = (0,0) #top-left
-        end = (h, w) #bottom-right
         
-    lpnts = lines.line_points(start, end)
     for x_row in range(h):
         for x_col in range(w):
             y_row = lpnts[x_col]
@@ -194,7 +190,7 @@ def _project_diag_1chan(
     return img
 
 @njit(cache=True)
-def _project_1chan(img: MatLike, side: int) -> MatLike:
+def _project_1chan(img: MatLike, side: int, diagonals:np.ndarray) -> MatLike:
     """Reflect one half of an image onto the other side (not inplace).
 
     Args:
@@ -227,13 +223,13 @@ def _project_1chan(img: MatLike, side: int) -> MatLike:
             mid = w // 2
             img[:, : mid] = img[:, w - mid :][:, ::-1]
         case 4: #reflect top positive slope
-            img = _project_diag_1chan(img, 'top', '+')
+            img = _project_diag_1chan(img, 'top', '+', diagonals[0])
         case 5: #reflect bottom positive slope
-            img = _project_diag_1chan(img, 'bottom', '+')
+            img = _project_diag_1chan(img, 'bottom', '+', diagonals[0])
         case 6: #reflect top negative slope
-            img = _project_diag_1chan(img, 'top', '-')
+            img = _project_diag_1chan(img, 'top', '-', diagonals[1])
         case 7: #reflect bottom negative slope
-            img = _project_diag_1chan(img, 'bottom', '-')            
+            img = _project_diag_1chan(img, 'bottom', '-', diagonals[1])            
         case _:
             raise ValueError("Unsupported side code")
     return img
@@ -418,7 +414,7 @@ def remove_vert(img: MatLike) -> MatLike:
         return _remove_vert(img)
 
 
-def half_mirror2(img: MatLike, side: str, disp=False):
+def half_mirror2(img: MatLike, side: str):
      # mirrors half the image onto the other half
     side_codes = {
         "tv": 0,
@@ -431,11 +427,17 @@ def half_mirror2(img: MatLike, side: str, disp=False):
         "tn": 7,
     }
     sqr = crop_square(img)
-    b, g, r = cv2.split(sqr)
-    snum = side_codes[side]
-    _project_1chan(b, snum)
     
-
+    b, g, r = cv2.split(sqr)
+    h, w = b.shape
+    snum = side_codes[side]
+    diagonals = lines.make_lines(h, w)
+    b = _project_1chan(b, snum, diagonals)
+    g = _project_1chan(g, snum, diagonals)
+    r = _project_1chan(r, snum, diagonals)
+    img = cv2.merge((b, g, r), dst=img)
+    return img
+    
 def half_mirror(img: MatLike, side: str, disp=False):
     # mirrors half the image onto the other half
     side_codes = {
@@ -449,18 +451,17 @@ def half_mirror(img: MatLike, side: str, disp=False):
         "tn": 7,
     }
     line_codes = {"v": 0, "h": 1, "p": 2, "n": 3}
-    sqr = crop_square(img)
-    bl = blackout(sqr, side_codes[side])
+    bl = blackout(img, side_codes[side])
     ln = side[1]
     mr = mirror(bl, line_codes[ln])
 
-    if disp:
-        cv2.imshow("Square", sqr)
-        cv2.waitKey(0)
-        cv2.imshow("Blackout", bl)
-        cv2.waitKey(0)
-        cv2.imshow("Mirror", mr)
-        cv2.waitKey(0)
+    # if disp:
+    #     cv2.imshow("Square", img)
+    #     cv2.waitKey(0)
+    #     cv2.imshow("Blackout", bl)
+    #     cv2.waitKey(0)
+    #     cv2.imshow("Mirror", mr)
+    #     cv2.waitKey(0)
     w = cv2.addWeighted(bl, 1.0, mr, 1.0, 0)
     if ln == "p":
         w = remove_diag_p(w)

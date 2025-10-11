@@ -3,12 +3,13 @@ from cv2.typing import MatLike
 from numba import njit
 from mirror import CV_FLIP_HORIZ, neighbours, med_of
 import timeit
+import time
 import cv2
 import numpy as np
 #local imports
 from mat import mir_p, mir_n
 from old.mat_original import mir_p_o, mir_n_o
-from mirror import crop_square, blackout, mirror, remove_diag_n, remove_diag_p
+from mirror import blackout, mirror, remove_diag_n, remove_diag_p
 from test import make_diag_n, make_diag_p
 from old.mirror_original import blackout_o, blackout_i, blackout_m, mirror_o, remove_diag_n_o, remove_diag_p_o, blackout_gpt
   
@@ -477,15 +478,80 @@ def test_remove_vert(img):
     
     #minimal overhead, so going with remove_vert_n for code symmetry
 
+def test_half_mirror(img):
+    import mirror
+    # Create test image
+    
+    def run_all(func, img):
+        side_codes = ['tv', 'bv', 'lh', 'rh', 'bp', 'tp', 'bn', 'tn']
+        for code in side_codes:
+            _ = func(img, code)
+        
+    img_size = (1001, 1001, 3)  # Adjust size as needed
+    test_img = np.random.randint(0, 256, img_size, dtype=np.uint8)
+    numiter = 1000 // 8
 
+    #warm um NJIT and see some results
+    test_copy = test_img.copy()
+    side_codes = ['tv', 'bv', 'lh', 'rh', 'bp', 'tp', 'bn', 'tn']
+    
+    start = time.perf_counter()
+    for code in side_codes:
+        hm2 = mirror.half_mirror2(test_img, code)
+        hm = mirror.half_mirror(test_copy, code)
+        print(f"results the same for code {code}: {np.allclose(hm, hm2)}")
+    elapsed = time.perf_counter() - start
+    print()
+    print(f"Warming up time: {elapsed:.6f} seconds")
+    
+    
+    start = time.perf_counter()
+    hm_time = timeit.timeit(lambda: run_all(mirror.half_mirror, test_copy), number=numiter)
+    hm2_time = timeit.timeit(lambda: run_all(mirror.half_mirror2, test_img), number=numiter)
+    elapsed = time.perf_counter() - start
+    print(f"Warmed up time (big): {elapsed:.6f} seconds")
+    
+    start = time.perf_counter()
+    hm_time_s = timeit.timeit(lambda: run_all(mirror.half_mirror, img), number=numiter)
+    hm2_time_s = timeit.timeit(lambda: run_all(mirror.half_mirror2, img), number=numiter)
+    elapsed = time.perf_counter() - start
+    print(f"Warmed up time (small): {elapsed:.6f} seconds")
+    
+    print()
+    print(f"Running half_mirror variants for each side (8) for {numiter} iterations ")
+    print(f"Half mirror time: {hm_time} (seconds) Image size: {test_img.shape}")
+    print(f"Half mirror 2 time: {hm2_time} (seconds) Image size: {test_img.shape}")
+    print(f"Half mirror (small) time: {hm_time_s} (seconds) Image size: {img.shape}")
+    print(f"Half mirror 2 (small) time: {hm2_time_s} (seconds) Image size: {img.shape}")
+    
+    '''
+    results the same for code tv: False
+    results the same for code bv: False
+    results the same for code lh: False
+    results the same for code rh: False
+    results the same for code bp: False
+    results the same for code tp: False
+    results the same for code bn: False
+    results the same for code tn: False
+
+    Warming up time: 5.950773 seconds (decreased to 0.533034 seconds after caching)
+    Warmed up time (big): 8.759871 seconds
+    Warmed up time (small): 1.075072 seconds
+
+    Running half_mirror variants for each side (8) for 125 iterations 
+    Half mirror time: 6.459962471009931 (seconds) Image size: (1001, 1001, 3)
+    Half mirror 2 time: 2.29957712101168 (seconds) Image size: (1001, 1001, 3)
+    Half mirror (small) time: 0.8349913559941342 (seconds) Image size: (375, 375, 3)
+    Half mirror 2 (small) time: 0.23972002399386838 (seconds) Image size: (375, 375, 3)
+    '''
 
 def main():
     from test import test_crop
     img = test_crop()
     
     # test_remove_diag2()
-    test_remove_vert(img)
-    
+    # test_remove_vert(img)
+    test_half_mirror(img)
     
 
 if __name__ == "__main__":
