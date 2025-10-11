@@ -177,6 +177,30 @@ def _project_1chan_diag(
                 img[row, col] = cp[row, col]
     return img
 
+def _project_diag_1chan(
+    img: MatLike,
+    start: Tuple[int, int],
+    end: Tuple[int, int],
+    loc: Literal["top", "bottom"],
+    diag: Literal["+", "-"]
+):
+    h, w = img.shape
+    if diag == "+":
+        mr = mir_p(img)
+    else:
+        mr = mir_n(img)
+        # mr = img
+    lpnts = lines.line_points(start, end)
+    for x_row in range(h):
+        for x_col in range(w):
+            y_row = lpnts[x_col]
+            # reflect the loc
+            if diag == "+" and ((loc == "top" and x_row > y_row) or (loc == "bottom" and x_row < y_row)):
+                img[x_row, x_col] = mr[x_row, x_col]
+            elif diag == "-" and ((loc == "top" and x_row > y_row) or (loc == "bottom" and x_row < y_row)):
+                img[x_row, x_col] = mr[x_row, x_col]
+    return img
+
 def _project_1chan(img, side, inplace=True):
     h, w = img.shape
     
@@ -193,6 +217,12 @@ def _project_1chan(img, side, inplace=True):
         case 3: # reflect right
             mid = w // 2
             img[:, : mid] = img[:, w - mid :][:, ::-1]
+        case 4: #reflect top positive slope
+            bl = (h, 0) #bottom-left
+            tr = (0, w) #top-right 
+            
+            
+            
     return img
 
 def blackout(img: MatLike, side: int) -> MatLike:

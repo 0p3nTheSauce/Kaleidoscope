@@ -90,7 +90,59 @@ def test_p1cd():
         
     cv2.imshow("Blackout1chan for side: top-positive", nimg)
     cv2.waitKey(0)
+
+def test_pd1c():
+    print('here')
+    img = test_crop()
     
+    b, g, r = cv2.split(img)
+    
+    h, w = b.shape
+    
+    bl = (h, 0)
+    tr = (0, w)
+    
+    tl = (0, 0)
+    br = (h, w)
+    
+    mirror._project_diag_1chan(b, bl, tr, loc='top', diag="+")
+    mirror._project_diag_1chan(g, bl, tr, loc='top', diag="+")
+    mirror._project_diag_1chan(r, bl, tr, loc='top', diag="+")
+    nimg = cv2.merge((b,g,r))
+    
+    cv2.imshow("Blackout1chan for side: top-postive", nimg)
+    cv2.waitKey(0)
+    
+    b, g, r = cv2.split(img)
+    
+    mirror._project_diag_1chan(b, bl, tr, loc='bottom', diag="+")
+    mirror._project_diag_1chan(g, bl, tr, loc='bottom', diag="+")
+    mirror._project_diag_1chan(r, bl, tr, loc='bottom', diag="+")
+    nimg = cv2.merge((b,g,r))
+    
+    cv2.imshow("Blackout1chan for side: bottom-postive", nimg)
+    cv2.waitKey(0)
+    
+    b, g, r = cv2.split(img)
+    
+    mirror._project_diag_1chan(b, tl, br, loc='top', diag="-")
+    mirror._project_diag_1chan(g, tl, br, loc='top', diag="-")
+    mirror._project_diag_1chan(r, tl, br, loc='top', diag="-")
+    nimg = cv2.merge((b,g,r))
+    
+    cv2.imshow("Blackout1chan for side: top-negative", nimg)
+    cv2.waitKey(0)
+    
+    b, g, r = cv2.split(img)
+    
+    mirror._project_diag_1chan(b, tl, br, loc='bottom', diag="-")
+    mirror._project_diag_1chan(g, tl, br, loc='bottom', diag="-")
+    mirror._project_diag_1chan(r, tl, br, loc='bottom', diag="-")
+    nimg = cv2.merge((b,g,r))
+    
+    cv2.imshow("Blackout1chan for side: bottom-negative", nimg)
+    cv2.waitKey(0)
+
 def test_p1c():
     img = test_crop()
     side = 3
@@ -264,7 +316,7 @@ if __name__ == '__main__':
     # test_remove_horiz()
     # test_half_mirror()
     # test_bo1cd()
-    test_p1c()
+    test_pd1c()
     # test_remove_diag_p()
     # test_blackout1chan()
     cv2.destroyAllWindows()
