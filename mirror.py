@@ -6,7 +6,7 @@ import sys
 from numba import njit
 import os
 # import argparse
-# from pathlib import Path
+from pathlib import Path
 
 # local
 from mat import mir_p, mir_n
@@ -227,6 +227,9 @@ def multi_mirror(img: MatLike, perm: int=0, disp:bool=False) -> MatLike:
             cv2.imshow("Half Mirror", hm)
             cv2.waitKey(0)
     return hm
+
+
+    
 
 def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
     idx = 0

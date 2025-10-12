@@ -4,42 +4,69 @@ import cv2
 import os
 import subprocess
 import sys
+from pathlib import Path
+from cv2.typing import MatLike
+from typing import List, Optional, Tuple
+from argparse import ArgumentParser
 
 
-def images_to_video(path, fr=30.0, newSize=None):
-    # .mp4 produced not compatible with whatsApp
-    # newSize should be (w, h)
+def read_dir(path: Path, suff: str = ".jpg") -> List[MatLike]:
+    """Read images (in order) from a directory.
 
-    # out_path = f'{path}.avi'
-    out_path = f"{path}.mp4"
+    Args:
+        path (Path): Path to image directory.
+        suff (str, optional): Image filename suffix. Defaults to ".jpg".
 
-    images = [img for img in os.listdir(path) if img.endswith(".jpg")]
-    images.sort(key=lambda x: int(x.split(".")[0]))
+    Returns:
+        List[MatLike]: Images in the directory.
+    """
+    files = sorted(
+        [f for f in path.iterdir() if f.is_file() and f.name.endswith(suff)],
+        key=lambda f: int(f.stem),
+    )
+    imgs = []
+    for f in files:
+        imgs.append(cv2.imread(str(f), cv2.IMREAD_COLOR))
 
-    resz = False
-    if newSize is not None:
-        size = newSize
-        w, h = newSize
-        resz = True
-    else:
-        frame = cv2.imread(os.path.join(path, images[0]))
-        h, w, c = frame.shape
-        size = (w, h)  # this might cause confusion being opposite to openCV
+    return imgs
 
-    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
+def images_to_video2(
+    imgs: List[MatLike], out_path: str, fr: float = 30.0, video_code="mp4v"
+) -> None:
+    """Convert a list of images to a video (.mp4 produced not compatible with whatsApp).
+
+    Args:
+        imgs (List[MatLike]): _description_
+        out_path (str): _description_
+        fr (float, optional): _description_. Defaults to 30.0.
+        video_code (str, optional): _description_. Defaults to "mp4v".
+
+    Raises:
+        RuntimeError: _description_
+    """
+    
+    
+    code_n_suff = {"XVID": ".avi", "MJPG": ".avi", "mp4v": ".mp4", "H264": ".mp4"}
+
+    suffix = code_n_suff[video_code]
+    if not out_path.endswith(suffix):
+        out_path = out_path + suffix
+
+    h, w, _ = imgs[0].shape
+    size = (w, h)  # NOTE is different to regular opencv
+
+    fourcc = cv2.VideoWriter_fourcc(*video_code)  # type: ignore (it doesn't like VideoWriter_fourcc)
     writer = cv2.VideoWriter(out_path, fourcc, fr, size)
 
-    for img in images:
-        img_path = os.path.join(path, img)
-        frame = cv2.imread(img_path)
-        if resz:
-            frame = cv2.resize(frame, newSize)
-        # cv2.imshow('image', frame)
-        # key = cv2.waitKey(30)
-        # if key == 27:
-        #   break
-        writer.write(frame)
+    if not writer.isOpened():
+        raise RuntimeError(
+            f"Failed to create video writer with codec '{video_code}'. "
+            f"Try 'MJPG' or 'mp4v' instead."
+        )
+
+    for img in imgs:
+        writer.write(img)
 
     writer.release()
     print(f"Video saved at {out_path}")
@@ -76,28 +103,45 @@ def convert_mp4(name):
             os.remove(temp_file)
 
 
-def makeVideo(name, fr=30, newSize=None):
-    images_to_video(name, fr, newSize)
-    convert_mp4(name)
-
-
 def main():
-    if len(sys.argv) == 2:
-        print("Making video")
-        makeVideo(sys.argv[1])
-    elif len(sys.argv) == 4:
-        try:
-            w = int(sys.argv[2])
-            h = int(sys.argv[3])
-        except ValueError:
-            print("Conversion failed: not a valid integer")
-        print("Making video")
-        makeVideo(sys.argv[1], newSize=(w, h))
-    else:
-        print("Usage: videos.py <input_directory> [ width height ]")
-        print("Example: videos.py illusion 500 500")
-        print("If width and height are not provided, the original size is used")
-        sys.exit(1)
+    parser = ArgumentParser(description="Create a .mp4 video from a folder of images")
+
+    parser.add_argument("directory", type=str, help="Image directory")
+
+    parser.add_argument(
+        "-sx", "--suffix", type=str, help="Image suffix.", default=".jpg"
+    )
+
+    parser.add_argument(
+        "-ot",
+        "--output",
+        type=str,
+        help="Output path, otherwise use name of directory",
+        default=None,
+    )
+    
+    
+    args = parser.parse_args()
+
+    path = Path(args.directory)
+
+    if not path.exists():
+        print(f"{path} not found")
+        return
+    if not path.is_dir():
+        print(f"{path} is not a directory")
+        return
+
+    imgs = read_dir(path, suff=args.suffix)
+
+    if len(imgs) == 0:
+        print(f"no images found for directory: {path} with image suffix: {args.suffix}")
+        return
+
+    if args.output is None:
+        args.output = str(path)
+
+    images_to_video2(imgs, args.output)
 
 
 if __name__ == "__main__":
