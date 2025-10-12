@@ -3,23 +3,23 @@ import mirror
 from pathlib import Path
 from cv2.typing import MatLike
 from typing import Tuple, Literal
-import numpy as np
-
 import mat
 import lines
 
 SAMPLE = './media/Flowers.jpg'
 
-def _get_ex_img(path: str = SAMPLE) -> MatLike:
+def _get_ex_img(path: str = SAMPLE, desired_h: int = 500) -> MatLike:
     ex_p = Path(path)
     
     if not ex_p.exists():
         raise ValueError(f"{ex_p} not found")
     img = cv2.imread(path, cv2.IMREAD_COLOR)
-     
-    f = 6.528
     
     h, w, _ = img.shape
+    
+    f = h / desired_h
+    
+    
     nh, nw = round(h / f), round(w / f)
     
     rimg =  cv2.resize(img, (nh, nw), interpolation=cv2.INTER_CUBIC)
@@ -30,8 +30,8 @@ def _get_ex_img(path: str = SAMPLE) -> MatLike:
 
     return rimg
 
-def test_crop():
-    img = _get_ex_img()
+def test_crop(desired_h:int=500):
+    img = _get_ex_img(desired_h=desired_h)
     
     #crop 
     sqr = mirror.crop_square(img)
@@ -39,41 +39,7 @@ def test_crop():
     cv2.waitKey(0)
 
     return sqr
-
-def test_blackout1chan(inplace=False):
-    img = test_crop()
-    
-    b, g, r = cv2.split(img)
-    
-    for side in [4]:
-    
-        nb = mirror.blackout_1chan(b, side, inplace)
-        ng = mirror.blackout_1chan(g, side, inplace)
-        nr = mirror.blackout_1chan(r, side, inplace)
-        
-        nimg = cv2.merge((nb,ng,nr))
-        
-        cv2.imshow(f"Blackout1chan for side: {side}", nimg)
-        cv2.waitKey(0)
-        
-def test_bo1cd():
-    img = test_crop()
-    
-    b, g, r = cv2.split(img)
-    
-    h, w = b.shape
-    
-    bl = (h, 0)
-    tr = (0, w)
-    
-    nb = mirror._blackout_1chan_diag(b, bl, tr, loc='top')
-    ng = mirror._blackout_1chan_diag(g, bl, tr, loc='top')
-    nr = mirror._blackout_1chan_diag(r, bl, tr, loc='top')
-    
-    nimg = cv2.merge((nb,ng,nr))
-        
-    cv2.imshow("Blackout1chan for side: top-positive", nimg)
-    cv2.waitKey(0)
+       
 
 def _project_diag_1chan(
     img: MatLike,
@@ -176,169 +142,180 @@ def test_p1c(side=0):
     cv2.imshow(f"Project1chan for side: {side_codes[side]}", nimg)
     cv2.waitKey(0)
 
-def test_blackout():
-    img = test_crop()
-    
-    for side in range(8):
-        
-        nimg = mirror.blackout(img, side)
-        
-        cv2.imshow(f"Blackout for side: {side}", nimg)
-        cv2.waitKey(0)
 
-def make_diag_p(
-    img: MatLike,
-    colour: Tuple[int, int, int] = (0, 255, 0),
-    disp: bool = False,
-    inplace: bool = True,
-) -> MatLike:
-    """Make diagnol line from the bottom left corner to the top right corner.
+def spin_mirror(img):
+    cv2.imshow("Image", img)
+    cv2.waitKey(50)
+    cp = img.copy()
+    mrs = ["th", "tn", "rv", "bp", "bh", "bn"]
+    for i in range(10):
+        for line in mrs:
+            hm = mirror.half_mirror(cp, line)
+            cv2.imshow("Half Mirror", hm)
+            key = cv2.waitKey(100)
+            if key == 27:
+                break
+    cv2.destroyAllWindows()
 
-    Args:
-        img (MatLike): Image (h, w, c) (square)
-        colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
-        disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
-        inplace (bool, optional): Modify image inplace. Defaults to True.
-        
-    Returns:
-        MatLike: The image with a diagnol line drawn down the positive diagonal
-    """
-    h, w, _ = img.shape
-    if inplace:
-        diaged = img
-    else:
-        diaged = img.copy()
-
-    for rows in range(h):
-        for columns in range(w):
-            if (h - 1 - rows) == columns:
-                diaged[rows, columns] = colour
-    if disp:
-        cv2.imshow("diag", diaged)
-        cv2.waitKey(0)
-    return diaged
-
-def make_diag_n(
-    img: MatLike,
-    colour: Tuple[int, int, int] = (0, 255, 0),
-    disp: bool = False,
-    inplace: bool = True,
-) -> MatLike:
-    """Make diagnol line from the top left corner to the bottom right corner.
-
-    Args:
-        img (MatLike): Image (h, w, c) (square)
-        colour (Tuple[int, int, int], optional): Colour of diagnol. Defaults to (0, 255, 0) (green).
-        disp (bool, optional): Display the image with cv2.imshow. Defaults to False.
-        inplace (bool, optional): Modify image inplace. Defaults to True.
-
-    Returns:
-        MatLike: The image with a diagonal line drawn down the negative diagonal
-    """
-    h, w, _ = img.shape
-    if inplace:
-        diaged = img
-    else:
-        diaged = img.copy()
-
-    for rows in range(h):
-        for columns in range(w):
-            if rows == columns:
-                diaged[rows, columns] = colour
-    if disp:
-        cv2.imshow("diag", diaged)
-        cv2.waitKey(0)
-    return diaged
-
-def make_horiz(
-    img: MatLike,
-    colour: Tuple[int, int, int] = (0,255,0),
-    disp: bool=False,
-    inplace: bool =True,
-) -> MatLike:
-
-    h, w, _ = img.shape
-    
-    if inplace:
-        horz = img
-    else:
-        horz = img.copy()
-        
-    centre = h // 2
-    
-    for col in range(1, w - 1):
-        horz[centre, col] = colour
-        
-    if disp:
-        cv2.imshow("Horiz", horz)
-        cv2.waitKey(0)
-
-    return horz
-
-def test_make_horiz():
-    img = test_crop()
-    make_horiz(img, disp=True)
-    return img
-
-def test_make_diag_n(inplace=True):
-    img = test_crop()
-    diag = make_diag_n(img, disp=True, inplace=inplace)
-    return diag
-
-def test_make_diag_p():
-    img = test_crop()
-    return make_diag_p(img, disp=True)
-
-def test_remove_diag_n():
-    img = test_make_diag_n()
-    remd = mirror.remove_diag_n(img)
-    cv2.imshow("Removed diagonal", remd)
+def spin_mirror2(img):
+    cv2.destroyAllWindows()
+    cp = img.copy()
+    mrs = ['th', 'bh', 'lv', 'rv', 'bp', 'tp', 'bn','tn']
+   
+    for i in range(20):
+        for mr in mrs:
+            hm = mirror.half_mirror(cp, mr)
+            cv2.imshow("Half Mirror", hm)
+            key = cv2.waitKey(100)
+            if key == 27:
+                break
     cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def test_spin_mirror(desired_h):
+    img = test_crop(desired_h)
     
+    spin_mirror(img)
 
-def test_remove_diag_p():
-    img = test_make_diag_p()
-    remd = mirror.remove_diag_p(img)
-    cv2.imshow("Removed diagonal", remd)
-    cv2.waitKey(0)
+def test_spin_mirror2(desired_h):
+    img = test_crop(desired_h)
     
-
-def test_remove_horiz():
-    img = test_make_horiz()
-    #need to make sure that the height is uneven
-    h, w, _ = img.shape
-    print(img.shape)
-    if h % 2 == 0:
-        img = np.vstack((np.zeros(w), img ))
-    print(img.shape)
-    remd = mirror.remove_horiz(img)
-    cv2.imshow("Horizontal removed", remd)
-    cv2.waitKey(0)
-    
+    spin_mirror2(img)
 
 
-def test_half_mirror():
-    img = test_crop()
-    side_codes = ['tv', 'bv', 'lh', 'rh', 'bp', 'tp', 'bn','tn']
-    # for c in side_codes:
-    #     hm = mirror.half_mirror(img, c)
-    #     cv2.imshow("Half mirrored", hm)
-    #     cv2.waitKey(0)
-    hm = mirror.half_mirror(img, side_codes[4], disp=True)
-    cv2.imshow("half mirror", hm) 
-    cv2.waitKey(0)
-    # cv2.imshow("original", img)
+
+def test_half_mirror(desired_h:int=500):
+    img = test_crop(desired_h)
+    side_codes = ['th', 'bh', 'lv', 'rv', 'bp', 'tp', 'bn','tn']
+    for c in side_codes:
+        hm = mirror.half_mirror(img, c, inplace=True)
+        cv2.imshow("Half mirrored", hm)
+        cv2.waitKey(1)
+    # hm = mirror.half_mirror(img, side_codes[4])
+    # cv2.imshow("half mirror", hm) 
     # cv2.waitKey(0)
+    cv2.imshow("original", img)
+    cv2.waitKey(0)
+
+def test_multiMirror(desired_h):
+    img = test_crop(desired_h)
+    # all_mrs = ['th', 'bh', 'lv', 'rv', 'bp', 'tp', 'bn','tn']
+    vline = ['lv', 'rv']
+    hline = ['th', 'bh']
+    pline = ['tp', 'bp']
+    nline = ['tn', 'bn']
+    combs = []
+    i = 0
+    for v in vline:
+        for h in hline:
+            for p in pline:
+                for n in nline:
+                    print(f"{i} Combination: {[v, h, p, n]}")
+                    combs.append([v, h, p, n])  
+                    i += 1     
+    
+    output = Path('./combs/')
+    output.mkdir(exist_ok=True)    
+    
+    for i, comb in enumerate(combs):
+        mm = mirror.multi_mirror(img, disp=False, mrs=comb)
+    
+        cv2.imshow(f"Combination: {i}", mm)
+        cv2.waitKey(100)
+        
+        outp = output / f"{i}.png"
+        cv2.imwrite(str(outp), mm)
+
+    '''
+    Interestingly, there are only 8 unique combinations. They seem to exist in permutation pairs
+    
+    
+                                                    True effect:
+    0 Combination: ['lv', 'th', 'tp', 'tn']         0
+    1 Combination: ['lv', 'th', 'tp', 'bn']         1
+    2 Combination: ['lv', 'th', 'bp', 'tn']         1
+    3 Combination: ['lv', 'th', 'bp', 'bn']         0
+    4 Combination: ['lv', 'bh', 'tp', 'tn']         4
+    5 Combination: ['lv', 'bh', 'tp', 'bn']         5 
+    6 Combination: ['lv', 'bh', 'bp', 'tn']         5
+    7 Combination: ['lv', 'bh', 'bp', 'bn']         4
+    8 Combination: ['rv', 'th', 'tp', 'tn']         8
+    9 Combination: ['rv', 'th', 'tp', 'bn']         9
+    10 Combination: ['rv', 'th', 'bp', 'tn']        9
+    11 Combination: ['rv', 'th', 'bp', 'bn']        8
+    12 Combination: ['rv', 'bh', 'tp', 'tn']        12
+    13 Combination: ['rv', 'bh', 'tp', 'bn']        13
+    14 Combination: ['rv', 'bh', 'bp', 'tn']        13
+    15 Combination: ['rv', 'bh', 'bp', 'bn']        12
+    '''
+
+def test_multi_mirror2(desired_h):
+    img = test_crop(desired_h)
+    # all_mrs = ['th', 'bh', 'lv', 'rv', 'bp', 'tp', 'bn','tn']
+    mrs = ['lv', 'th', 'tp', 'tn']
+    combs = []
+    i = 0
+    for pos0 in mrs:
+        for pos1 in mrs:
+            for pos2 in mrs:
+                for pos3 in mrs:
+                    if len({pos0, pos1, pos2, pos3}) == 4:  
+                        combs.append([pos0, pos1, pos2, pos3])
+                        print(f"{i} Combination: {[pos0, pos1, pos2, pos3]}")
+                        i += 1
+                        
+    output = Path('./combs2/')
+    output.mkdir(exist_ok=True)    
+    
+    for i, comb in enumerate(combs):
+        mm = mirror.multi_mirror(img, disp=False, mrs=comb)
+    
+        cv2.imshow(f"Combination: {i}", mm)
+        # cv2.imshow("Miror", mm)
+        cv2.waitKey(0)
+        
+        outp = output / f"{i}.png"
+        cv2.imwrite(str(outp), mm)
+
+    ''' No new images aside from the original combinations in test1. 
+    Additionally, it seems h and v, and p and n, lines need to be paired together (in either order) to produce symmetry
+    0 Combination: ['lv', 'th', 'tp', 'tn']
+    1 Combination: ['lv', 'th', 'tn', 'tp']
+    2 Combination: ['lv', 'tp', 'th', 'tn']
+    3 Combination: ['lv', 'tp', 'tn', 'th']
+    4 Combination: ['lv', 'tn', 'th', 'tp']
+    5 Combination: ['lv', 'tn', 'tp', 'th']
+    6 Combination: ['th', 'lv', 'tp', 'tn']
+    7 Combination: ['th', 'lv', 'tn', 'tp']
+    8 Combination: ['th', 'tp', 'lv', 'tn']
+    9 Combination: ['th', 'tp', 'tn', 'lv']
+    10 Combination: ['th', 'tn', 'lv', 'tp']
+    11 Combination: ['th', 'tn', 'tp', 'lv']
+    12 Combination: ['tp', 'lv', 'th', 'tn']
+    13 Combination: ['tp', 'lv', 'tn', 'th']
+    14 Combination: ['tp', 'th', 'lv', 'tn']
+    15 Combination: ['tp', 'th', 'tn', 'lv']
+    16 Combination: ['tp', 'tn', 'lv', 'th']
+    17 Combination: ['tp', 'tn', 'th', 'lv']
+    18 Combination: ['tn', 'lv', 'th', 'tp']
+    19 Combination: ['tn', 'lv', 'tp', 'th']
+    20 Combination: ['tn', 'th', 'lv', 'tp']
+    21 Combination: ['tn', 'th', 'tp', 'lv']
+    22 Combination: ['tn', 'tp', 'lv', 'th']
+    23 Combination: ['tn', 'tp', 'th', 'lv']
+    '''
+
 
 if __name__ == '__main__':
-    import sys
     # test_make_horiz()
     # test_remove_horiz()
     # test_half_mirror()
     # test_bo1cd()
     # test_pd1c()
-    test_p1c(int(sys.argv[1]))
+    # test_p1c(int(sys.argv[1]))
     # test_remove_diag_p()
-    # test_blackout1chan()
+    # test_half_mirror(desired_h=2000)
+    # test_spin_mirror2(1500)
+    test_multi_mirror2(1500)
     cv2.destroyAllWindows()
         

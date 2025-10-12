@@ -110,7 +110,7 @@ def _project_diag_1chan(
 
 @njit(cache=True)
 def _project_1chan(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
-    """Reflect one half of an image onto the other side (not inplace).
+    """Reflect one half of an image onto the other side (inplace).
 
     Args:
         img (MatLike): Image (h, w)
@@ -154,13 +154,30 @@ def _project_1chan(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
     return img
 
 
-def half_mirror(img: MatLike, side: str):
-    # mirrors half the image onto the other half
+def half_mirror(img: MatLike, side: str, inplace:bool = False) -> MatLike:
+    """
+    Reflect one half of an image onto the other side (not inplace)
+    
+    Args:
+        img (MatLike): Image (h, w, c)
+        side (str): first letter location, second is plane of symmetry 
+            - th (top, horizontal)
+            - bh (bottom, horizontal)
+            - lv (left, vertical)
+            - rv (right, vertical)
+            - tp (top, positive diagnoal)
+            - bp (bottom, negative diagonal)
+            - tn (top, negative diagonal)
+            - bn (bottom, negative diagonal) 
+
+    Returns:
+        MatLike: Image with one plane of symmetry
+    """
     side_codes = {
-        "tv": 0,
-        "bv": 1,
-        "lh": 2,
-        "rh": 3,
+        "th": 0,
+        "bh": 1,
+        "lv": 2,
+        "rv": 3,
         "bp": 4,
         "tp": 5,
         "bn": 6,
@@ -174,26 +191,16 @@ def half_mirror(img: MatLike, side: str):
     b = _project_1chan(b, snum, diagonals)
     g = _project_1chan(g, snum, diagonals)
     r = _project_1chan(r, snum, diagonals)
-    img = cv2.merge((b, g, r), dst=img)
-    return img
+    if inplace:
+        img = cv2.merge((b, g, r), dst=img)
+        return img
+    else:
+        hm = cv2.merge((b, g, r))
+        return hm
 
 
-def spin_mirror(img):
-    cv2.imshow("Image", img)
-    cv2.waitKey(50)
-    cp = img.copy()
-    mrs = ["lh", "tp", "tv", "tn", "rh", "bp", "bv", "bn"]
-    for i in range(10):
-        for line in mrs:
-            hm = half_mirror(cp, line)
-            cv2.imshow("Half Mirror", hm)
-            key = cv2.waitKey(100)
-            if key == 27:
-                break
-    cv2.destroyAllWindows()
 
-
-def multi_mirror(img, mrs=["tn", "tp", "tv", "rh"], disp=False):
+def multi_mirror(img, mrs=["th", "rv", "tp", "tn"], disp=False) -> MatLike:
     hm = img.copy()
     for line in mrs:
         hm = half_mirror(hm, line)
@@ -202,6 +209,21 @@ def multi_mirror(img, mrs=["tn", "tp", "tv", "rh"], disp=False):
             cv2.waitKey(0)
     return hm
 
+def multi_mirror_combs(img, disp=False):
+    combs = [
+        ['lv', 'th', 'tp', 'tn'],
+        ['lv', 'th', 'tp', 'bn'],
+        ['lv', 'bh', 'tp', 'tn'],
+        ['lv', 'bh', 'tp', 'bn'],
+        ['rv', 'th', 'tp', 'tn'],
+        ['rv', 'th', 'tp', 'bn'],
+        ['rv', 'bh', 'tp', 'tn'],
+        ['rv', 'bh', 'tp', 'bn'],
+    ]
+    multimgs = []
+    for c in combs:
+        multimgs.append(multi_mirror(img,c,disp))
+    return multimgs
 
 def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
     idx = 0
