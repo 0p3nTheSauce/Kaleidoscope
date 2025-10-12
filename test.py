@@ -197,7 +197,17 @@ def test_half_mirror(desired_h:int=500):
     cv2.imshow("original", img)
     cv2.waitKey(0)
 
+def multi_mirror_old(img, mrs=["th", "rv", "tp", "tn"], disp=False) -> MatLike:
+    hm = img.copy()
+    for line in mrs:
+        hm = mirror.half_mirror(hm, line)
+        if disp:
+            cv2.imshow("Half Mirror", hm)
+            cv2.waitKey(0)
+    return hm
+
 def test_multiMirror(desired_h):
+    
     img = test_crop(desired_h)
     # all_mrs = ['th', 'bh', 'lv', 'rv', 'bp', 'tp', 'bn','tn']
     vline = ['lv', 'rv']
@@ -218,7 +228,7 @@ def test_multiMirror(desired_h):
     output.mkdir(exist_ok=True)    
     
     for i, comb in enumerate(combs):
-        mm = mirror.multi_mirror(img, disp=False, mrs=comb)
+        mm = multi_mirror_old(img, disp=False, mrs=comb)
     
         cv2.imshow(f"Combination: {i}", mm)
         cv2.waitKey(100)
@@ -268,7 +278,7 @@ def test_multi_mirror2(desired_h):
     output.mkdir(exist_ok=True)    
     
     for i, comb in enumerate(combs):
-        mm = mirror.multi_mirror(img, disp=False, mrs=comb)
+        mm = multi_mirror_old(img, disp=False, mrs=comb)
     
         cv2.imshow(f"Combination: {i}", mm)
         # cv2.imshow("Miror", mm)

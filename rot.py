@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import cv2
 from cv2.typing import MatLike
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 import os
 
 def rotate(img: MatLike, angle: float) -> MatLike:
@@ -40,8 +40,9 @@ def spin_func(
     deg: int =1,
     time: int =50,
     outfolder: Optional[str]=None,
-    index: int =0
-) -> None:
+    index: int =0,
+    disp: bool = True
+) -> List[MatLike]:
     """Rotate, and apply a function to an image. 
 
     Args:
@@ -50,24 +51,37 @@ def spin_func(
         iter (int, optional): Number of times to apply function and rotation. Defaults to 360.
         deg (int, optional): Degrees to rotate per iteration. Defaults to 1.
         time (int, optional): Wait peroid between application (ms). Defaults to 50.
-        outfolder (Optional[str], optional): Folder to store intermediate images. Defaults to None.
+        outfolder (Optional[str], optional): Folder to store intermediate images, if None don't save. Defaults to None.
         index (int, optional): For enumerating image paths. Defaults to 0.
+        disp (bool, optional): Display the intermediary results. Defaults to True.
+
+    Returns:
+        List[MatLike]: Intermediary images.
     """
+    
     if outfolder is not None:
         write = True
         print(f"Writing to {outfolder}")
         os.makedirs(outfolder, exist_ok=True)
     else:
         write = False
+        
+    frames = []    
+        
     for i in range(0, iter, deg):
+        
         rot = rotate(img, i)
         rot = func(rot)
-        cv2.imshow("Rotated", rot)
+        
+        if disp:
+            cv2.imshow("Rotated", rot)
+            key = cv2.waitKey(time)
+            if key == 27:
+                break
+        
         if write:
             cv2.imwrite(f"{outfolder}/{i + index}.jpg", rot)
-        key = cv2.waitKey(time)
-        if key == 27:
-            break
+        frames.append(rot)
+        
+    return frames
 
-if __name__ == "__main__":
-    print('Rotations')

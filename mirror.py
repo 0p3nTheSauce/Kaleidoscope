@@ -199,17 +199,17 @@ def half_mirror(img: MatLike, side: str, inplace:bool = False) -> MatLike:
         return hm
 
 
+def multi_mirror(img: MatLike, perm: int=0, disp:bool=False) -> MatLike:
+    """Create one of the 8 possible images produced by applying 4 planes of symmetry. 
 
-def multi_mirror(img, mrs=["th", "rv", "tp", "tn"], disp=False) -> MatLike:
-    hm = img.copy()
-    for line in mrs:
-        hm = half_mirror(hm, line)
-        if disp:
-            cv2.imshow("Half Mirror", hm)
-            cv2.waitKey(0)
-    return hm
+    Args:
+        img (MatLike): Image (h, w, c)
+        perm (int, optional): Permutation of operations [0,7]. Defaults to 0.
+        disp (bool, optional): Display intermediary images from application of single planes of symmetry. Defaults to False.
 
-def multi_mirror_combs(img, disp=False):
+    Returns:
+        MatLike: One of 8 unique possible images with 4 planes of symmetry.
+    """
     combs = [
         ['lv', 'th', 'tp', 'tn'],
         ['lv', 'th', 'tp', 'bn'],
@@ -220,10 +220,13 @@ def multi_mirror_combs(img, disp=False):
         ['rv', 'bh', 'tp', 'tn'],
         ['rv', 'bh', 'tp', 'bn'],
     ]
-    multimgs = []
-    for c in combs:
-        multimgs.append(multi_mirror(img,c,disp))
-    return multimgs
+    hm = img.copy()
+    for line in combs[perm]:
+        hm = half_mirror(hm, line)
+        if disp:
+            cv2.imshow("Half Mirror", hm)
+            cv2.waitKey(0)
+    return hm
 
 def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
     idx = 0
@@ -232,7 +235,7 @@ def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
         img = cv2.imread(img_path)
         img = cv2.resize(img, size)
         img = crop_square(img)
-        spin_func(img, multi_mirror, time=1, outfolder=output_dir, index=idx)
+        spin_func(img, multi_mirror, time=1, outfolder=output_dir, index=idx, disp=disp)
         idx += 360
     cv2.destroyAllWindows()
 
