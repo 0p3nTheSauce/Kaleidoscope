@@ -69,7 +69,13 @@ def images_to_video(
     print(f"Video saved at {out_path}")
 
 
-def convert_mp4(vid_path: str, out_path:Optional[str] = None):
+def convert_mp4(vid_path: str, out_path:Optional[str] = None) -> None:
+    """Re-encode .mp4 files created by images_to_video for what's app compatibility
+
+    Args:
+        vid_path (str): Path to video file
+        out_path (Optional[str], optional): Output path, othewise replaces video if None. Defaults to None.
+    """
     # re-encode the .mp4
 
     original_file = vid_path
