@@ -5,13 +5,13 @@ import numpy as np
 import sys
 from numba import njit
 import os
-# import argparse
+from argparse import ArgumentParser
 from pathlib import Path
 
 # local
 from mat import mir_p, mir_n
 from rot import spin_func
-from videos import makeVideo
+
 import lines
 
 # constants
@@ -228,9 +228,6 @@ def multi_mirror(img: MatLike, perm: int=0, disp:bool=False) -> MatLike:
             cv2.waitKey(0)
     return hm
 
-
-    
-
 def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
     idx = 0
     for f in os.listdir(input_dir):
@@ -238,7 +235,7 @@ def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
         img = cv2.imread(img_path)
         img = cv2.resize(img, size)
         img = crop_square(img)
-        spin_func(img, multi_mirror, time=1, outfolder=output_dir, index=idx, disp=disp)
+        spin_func(img, multi_mirror, wait=1, outfolder=output_dir, index=idx, disp=disp)
         idx += 360
     cv2.destroyAllWindows()
 
@@ -266,22 +263,170 @@ def main_old():
     cv2.waitKey(0)
 
     # spin_func(track, edgey_sing, iter=1000, deg=1, time=20)
-    spin_func(img, multi_mirror, time=1, outfolder=out)  # very cool
-    # spin_func(img, multi_mirror, time=1)
-    makeVideo(out)
-    # edgey(img ,time=20)
+    spin_func(img, multi_mirror, wait=1, outfolder=out)  # very cool
 
-    # all_dir('src_imgs', 'all_src')
-    # makeVideo('all_src')
-    # hm = multi_mirror(img, disp=True)
+
 
     cv2.destroyAllWindows()
     # spin_mirror(img)
 
 
 def main():
-    pass
+    # Create parent parser with common arguments
+    common_parent = ArgumentParser(add_help=False)
+    common_parent.add_argument(
+        'in_path',
+        help='Path to input image or folder'
+    )
+    common_parent.add_argument(
+        '-sq',
+        '--square',
+        action='Store true',
+        help='Crop to centre square before other operations'
+    )
+    common_parent.add_argument(
+        '-ns',
+        '--new_size',
+        type=int,
+        nargs=2,
+        metavar=('WIDTH', 'HEIGHT'),
+        help='New size as width height (e.g., -ns 1920 1080)'
+    )
+    common_parent.add_argument(
+        '-fx',
+        '--factor_x',
+        type=float,
+        help='Factor to multiply width by (resize)'
+    )
+    common_parent.add_argument(
+        '-fy',
+        '--factor_y',
+        type=float,
+        help='Factor to multiply height by (resize)'
+    )
+    common_parent.add_argument(
+        '-nd',
+        '--no_display',
+        action='Store true',
+        help='Do not view output'
+    )
+    common_parent.add_argument(
+        '-ot',
+        '--out_path',
+        type=str,
+        nargs='?',
+        const='auto',  # Value if flag provided without argument
+        default=None,   # Value if flag not provided at all
+        help='Output path. If provided without value, auto-generates from input path.'
+    )
 
+    # Main parser
+    parser = ArgumentParser(
+        'Create mirrored images and kaleidoscope videos',
+        parents=[common_parent]
+    )
+
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    # Each subparser inherits from parent
+    mirror_parser = subparsers.add_parser(
+        'mirror',
+        help='Mirror a whole image',
+        parents=[common_parent]
+    )
+    mirror_parser.add_argument(
+        'plane',
+        help='Mirror about this plane of symmetry',
+        choices=['vertical', 'horizontal', '+diagonal', '-diagonal']
+    )
+
+    halfm_parser = subparsers.add_parser(
+        'half_mirror',
+        help='Reflect one half of the image onto the other',
+        parents=[common_parent]
+    )
+    halfm_parser.add_argument(
+        'plane',
+        choices=['th', 'bh', 'lv', 'rv', 'tp', 'bp', 'tn', 'bn'],
+        metavar='SIDE+PLANE',
+        help='Side to reflect + plane of symmetry. '
+            'Sides: t/b/l/r (top/bottom/left/right). '
+            'Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal)'
+    )
+
+    multim_parser = subparsers.add_parser(
+        'multi_mirror',
+        help='Create one of the 8 possible images produced by applying 4 planes of symmetry.',
+        parents=[common_parent]
+    )
+    multim_parser.add_argument(
+        'permutation_num',
+        type=int,
+        choices=range(8),
+        help='Permutation of operations [0,7].',
+    )
+    multim_parser.add_argument(
+        '-dv',
+        '--display_verbose', 
+        help='Display intermediary steps',
+        action='store_true'
+    )
+
+    spin_parser = subparsers.add_parser(
+        'spin_mirror',
+        help='Rotate image while applying multi-mirror (creates kaleidoscope)',
+        parents=[common_parent]
+    )
+    spin_parser.add_argument(
+        'permutation_num',
+        type=int,
+        choices=range(8),
+        help='Permutation of operations [0,7].',
+    )
+    spin_parser.add_argument(
+        '-it',
+        '--iterations',
+        type=int,
+        help='Number of times to apply function and rotation. Defaults to 360.',
+        default=360
+    )
+    spin_parser.add_argument(
+        '-dg',
+        '--degrees',
+        type=int,
+        help='Degrees to rotate per iteration. Defaults to 1.',
+        default=1
+    )
+    spin_parser.add_argument(
+        '-wt',
+        '--wait',
+        type=int,
+        help='Wait peroid between application (ms). Defaults to 50.',
+        default=50
+    )
+    spin_parser.add_argument(
+        '-od',
+        '--output_to_directory',
+        action='store_true',
+        help='Save intermediary images to a directory'
+    )
+    spin_parser.add_argument(
+        '-ov',
+        '--output_to_video',
+        action='store_true',
+        help='Create a video from the images'
+    )
+    spin_parser.add_argument(
+        '-nr',
+        '--no_recode',
+        action='store_true',
+        help="Don't recode the video with FFMPEG"
+    )
+    
+    args = parser.parse_args()
+    
+    
+    
 
 if __name__ == "__main__":
     main_old()

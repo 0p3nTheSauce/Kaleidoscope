@@ -38,7 +38,7 @@ def spin_func(
     func: Callable[[MatLike], MatLike],
     iter: int =360,
     deg: int =1,
-    time: int =50,
+    wait: int =50,
     outfolder: Optional[str]=None,
     index: int =0,
     disp: bool = True
@@ -50,7 +50,7 @@ def spin_func(
         func (Callable[[MatLike], MatLike]): Modifying function to apply to image. 
         iter (int, optional): Number of times to apply function and rotation. Defaults to 360.
         deg (int, optional): Degrees to rotate per iteration. Defaults to 1.
-        time (int, optional): Wait peroid between application (ms). Defaults to 50.
+        wait (int, optional): Wait peroid between application (ms). Defaults to 50.
         outfolder (Optional[str], optional): Folder to store intermediate images, if None don't save. Defaults to None.
         index (int, optional): For enumerating image paths. Defaults to 0.
         disp (bool, optional): Display the intermediary results. Defaults to True.
@@ -75,7 +75,7 @@ def spin_func(
         
         if disp:
             cv2.imshow("Rotated", rot)
-            key = cv2.waitKey(time)
+            key = cv2.waitKey(wait)
             if key == 27:
                 break
         
