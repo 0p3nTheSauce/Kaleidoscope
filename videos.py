@@ -3,10 +3,9 @@
 import cv2
 import os
 import subprocess
-import sys
 from pathlib import Path
 from cv2.typing import MatLike
-from typing import List, Optional, Tuple
+from typing import List, Optional
 from argparse import ArgumentParser
 
 
@@ -30,8 +29,7 @@ def read_dir(path: Path, suff: str = ".jpg") -> List[MatLike]:
 
     return imgs
 
-
-def images_to_video2(
+def images_to_video(
     imgs: List[MatLike], out_path: str, fr: float = 30.0, video_code="mp4v"
 ) -> None:
     """Convert a list of images to a video (.mp4 produced not compatible with whatsApp).
@@ -45,8 +43,7 @@ def images_to_video2(
     Raises:
         RuntimeError: _description_
     """
-    
-    
+
     code_n_suff = {"XVID": ".avi", "MJPG": ".avi", "mp4v": ".mp4", "H264": ".mp4"}
 
     suffix = code_n_suff[video_code]
@@ -72,11 +69,18 @@ def images_to_video2(
     print(f"Video saved at {out_path}")
 
 
-def convert_mp4(name):
+def convert_mp4(vid_path: str, out_path:Optional[str] = None):
     # re-encode the .mp4
 
-    original_file = f"{name}.mp4"
-    temp_file = f"{name}_temp.mp4"
+    original_file = vid_path
+
+    if out_path:
+        temp_file = out_path
+    else:
+        temp_file = vid_path
+
+    if temp_file == original_file:
+        temp_file = f"{temp_file.rsplit('.')[0]}_temp.mp4"
 
     # FFMPEG command to re-encode to H.264 and AAC
     command = [
@@ -94,8 +98,11 @@ def convert_mp4(name):
 
     try:
         subprocess.run(command, check=True)
-        os.replace(temp_file, original_file)
-        print(f"Video successfully written at {original_file}")
+        if out_path:
+            print(f"Video successfully written at {out_path}")
+        else:
+            os.replace(temp_file, original_file)
+            print(f"Video successfully written at {original_file}")
     except subprocess.CalledProcessError as e:
         print("An error occurred while processing the video:", e)
         # Clean up temp file if there was an error
@@ -104,45 +111,80 @@ def convert_mp4(name):
 
 
 def main():
-    parser = ArgumentParser(description="Create a .mp4 video from a folder of images")
+    parser = ArgumentParser(description="Create and modify videos")
 
-    parser.add_argument("directory", type=str, help="Image directory")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    parser.add_argument(
+    create_parser = subparsers.add_parser(
+        "create", help="Create a .mp4 video from a folder of images"
+    )
+    create_parser.add_argument(
+        "img_dir", type=str, help="Path to folder containing images"
+    )
+    create_parser.add_argument(
         "-sx", "--suffix", type=str, help="Image suffix.", default=".jpg"
     )
+    create_parser.add_argument(
+        "-ot", "--output", type=str, help="Output path", default=None
+    )
+    create_parser.add_argument(
+        "-rc",
+        "--recode",
+        action="store_true",
+        help="Recode the .mp4 with FFMPEG (WhatsApp compatibility)",
+    )
 
-    parser.add_argument(
-        "-ot",
-        "--output",
-        type=str,
-        help="Output path, otherwise use name of directory",
-        default=None,
+    recode_parser = subparsers.add_parser(
+        "recode", help="Recode the .mp4 with FFMPEG (WhatsApp compatibility)"
+    )
+    recode_parser.add_argument("vid_path", type=str, help="Path to .mp4 file to recode")
+    recode_parser.add_argument(
+        "-ot", "--output", type=str, help="Output path", default=None
     )
     
     
     args = parser.parse_args()
 
-    path = Path(args.directory)
+    if args.command == 'create':
+        
+        img_dir = Path(args.img_dir)
+        
+        if not img_dir.exists():
+            print(f"{img_dir} not found")
+            return  
+        if not img_dir.is_dir():
+            print(f"{img_dir} is not a directory")
+            return
 
-    if not path.exists():
-        print(f"{path} not found")
-        return
-    if not path.is_dir():
-        print(f"{path} is not a directory")
-        return
+        imgs = read_dir(img_dir, suff=args.suffix)
 
-    imgs = read_dir(path, suff=args.suffix)
+        if len(imgs) == 0:
+            print(f"no images found for directory: {img_dir} with image suffix: {args.suffix}")
+            return
 
-    if len(imgs) == 0:
-        print(f"no images found for directory: {path} with image suffix: {args.suffix}")
-        return
+        if args.output is None:
+            args.output = str(img_dir)
 
-    if args.output is None:
-        args.output = str(path)
+        images_to_video(imgs, args.output)
+        
+        if args.recode:
+            convert_mp4(args.output)
 
-    images_to_video2(imgs, args.output)
-
+    elif args.command == 'recode':
+        
+        vid_path = Path(args.vid_path)
+        
+        if not vid_path.exists():
+            print(f"{vid_path} not found")
+            return
+        if not vid_path.is_file():
+            print(f"{vid_path} is not a file")
+            return
+        
+        convert_mp4(str(vid_path), args.output)
+        
+        
+        
 
 if __name__ == "__main__":
     main()
