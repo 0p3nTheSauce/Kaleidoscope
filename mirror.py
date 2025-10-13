@@ -206,6 +206,7 @@ def multi_mirror(img: MatLike, perm: int = 0, disp: bool = False, comb: Optional
         img (MatLike): Image (h, w, c)
         perm (int, optional): Permutation of operations [0,7]. Defaults to 0.
         disp (bool, optional): Display intermediary images from application of single planes of symmetry. Defaults to False.
+        comb (Optional[List[str]], optional): Combination of planes. 
 
     Returns:
         MatLike: One of 8 unique possible images with 4 planes of symmetry.
