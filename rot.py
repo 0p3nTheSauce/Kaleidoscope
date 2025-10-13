@@ -38,7 +38,7 @@ def spin_func(
     func: Callable[[MatLike], MatLike],
     iter: int =360,
     deg: int =1,
-    wait: int =50,
+    wait: int =1,
     outfolder: Optional[str]=None,
     index: int =0,
     disp: bool = True

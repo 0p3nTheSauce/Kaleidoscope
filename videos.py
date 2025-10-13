@@ -31,7 +31,7 @@ def read_dir(path: Path, suff: str = ".jpg") -> List[MatLike]:
 
 def images_to_video(
     imgs: List[MatLike], out_path: str, fr: float = 30.0, video_code="mp4v"
-) -> None:
+) -> str:
     """Convert a list of images to a video (.mp4 produced not compatible with whatsApp).
 
     Args:
@@ -67,7 +67,8 @@ def images_to_video(
 
     writer.release()
     print(f"Video saved at {out_path}")
-
+    return out_path
+    
 
 def convert_mp4(vid_path: str, out_path:Optional[str] = None) -> None:
     """Re-encode .mp4 files created by images_to_video for what's app compatibility
