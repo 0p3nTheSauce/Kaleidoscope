@@ -192,7 +192,7 @@ def _project(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
             raise ValueError("Unsupported side code")
     return img
 
-def half_mirror(img: MatLike, side: str, inplace: bool = False) -> MatLike:
+def half_mirror(img: MatLike, side: str, inplace: bool = False, force:bool = False) -> Optional[MatLike]:
     """
     Reflect one half of an image onto the other side (not inplace)
 
@@ -232,7 +232,9 @@ def half_mirror(img: MatLike, side: str, inplace: bool = False) -> MatLike:
         #to the destination. For some reason instead of throwing an index out of bounds error,
         # crashing, it seems to be reading from adjacent memory locations (probably a result of 
         # njit)
-        print("Warning: non-square images produced undefined behaviour when using diagonals")
+        print("Warning: non-square images produce undefined behaviour when using diagonals")
+        if not force:
+            return
     
     diagonals = lines.make_lines(h, w)
     if inplace:
@@ -243,8 +245,8 @@ def half_mirror(img: MatLike, side: str, inplace: bool = False) -> MatLike:
 
 
 def multi_mirror(
-    img: MatLike, perm: int = 0, disp: bool = False, comb: Optional[List[str]] = None
-) -> MatLike:
+    img: MatLike, perm: int = 0, disp: bool = False, comb: Optional[List[str]] = None, force:bool = False
+) -> Optional[MatLike]:
     """Create one of the 8 possible images produced by applying 4 planes of symmetry.
 
     Args:
@@ -271,7 +273,9 @@ def multi_mirror(
 
     hm = img.copy()
     for line in comb:
-        hm = half_mirror(hm, line)
+        hm = half_mirror(hm, line, force=force)
+        if hm is None:
+            return
         if disp:
             cv2.imshow("Half Mirror", hm)
             cv2.waitKey(0)
@@ -285,6 +289,8 @@ def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
         img = cv2.imread(img_path)
         img = cv2.resize(img, size)
         img = crop_square(img)
+        
+        
         spin_func(img, multi_mirror, wait=1, outfolder=output_dir, index=idx, disp=disp)
         idx += 360
     cv2.destroyAllWindows()
@@ -527,11 +533,11 @@ def main():
         or args.command == "half_mirror"
         or args.command == "multi_mirror"
     ):
-        if not args.no_disp:
+        if not args.no_disp and res is not None:
             cv2.imshow(args.command, res)
             cv2.waitKey(0)
 
-        if args.out_img:
+        if args.out_img and res is not None:
             cv2.imwrite(args.out_img, res)
 
     elif args.command == "spin_mirror":

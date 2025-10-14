@@ -35,7 +35,7 @@ def spin(img: MatLike):
 
 def spin_func(
     img: MatLike,
-    func: Callable[[MatLike], MatLike],
+    func: Callable[[MatLike], Optional[MatLike]],
     iter: int =360,
     deg: int =1,
     wait: int =1,
@@ -72,6 +72,8 @@ def spin_func(
         
         rot = rotate(img, i)
         rot = func(rot)
+        if rot is None:
+            break
         
         if disp:
             cv2.imshow("Rotated", rot)
