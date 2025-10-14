@@ -17,9 +17,6 @@ def mir_n_1chan(A):  # negative diagonal
 
 @njit(cache=True)
 def mir_p(A):
-    # B = A.transpose(1, 0, 2)
-    # C = B[::-1, :, :]  # Flip vertically (equivalent to np.flip(C, 0))
-    # D = C[:, ::-1, :]  # Flip horizontally (equivalent to np.flip(D, 1)
     return A.transpose(1, 0, 2)[::-1, ::-1, :]
 
 @njit(cache=True)

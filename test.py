@@ -193,6 +193,7 @@ def test_half_mirror(desired_h:int=500):
     #     cv2.waitKey(0)
     hm = mirror.half_mirror(img, side_codes[6])
     cv2.imshow("half mirror", hm) 
+    cv2.imwrite("halfmirror2.png", hm)
     cv2.waitKey(0)
     cv2.imshow("original", img)
     cv2.waitKey(0)

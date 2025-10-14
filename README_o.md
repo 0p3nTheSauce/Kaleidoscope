@@ -19,10 +19,15 @@ cd Kaleidoscope
 #intall requirements
 python -m venv .venv
 source .venv/bin/activate
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
+
+
 ## Usage
+
+```bash
+python mirror.py -h
 
 
 ## Features

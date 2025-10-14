@@ -7,7 +7,7 @@ from numba import njit
 import os
 from argparse import ArgumentParser
 from pathlib import Path
-
+import tkinter as tk
 # local
 from mat import mir_p, mir_n
 from rot import spin_func
@@ -289,11 +289,9 @@ def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
         idx += 360
     cv2.destroyAllWindows()
 
-
-def main():
-    # Image in parser
+def _get_img_in_pars() -> ArgumentParser:
+    
     img_in_parser = ArgumentParser(add_help=False)
-    img_in_parser.add_argument("in_img", help="Path to input image")
     img_in_parser.add_argument(
         "-sq",
         "--square",
@@ -309,29 +307,52 @@ def main():
         help="New size as width height (e.g., -ns 1920 1080)",
     )
     img_in_parser.add_argument(
+        '-as',
+        '--auto_size',
+        action='store_true'
+    )
+    img_in_parser.add_argument(
         "-fx", "--factor_x", type=float, help="Factor to multiply width by (resize)"
     )
     img_in_parser.add_argument(
         "-fy", "--factor_y", type=float, help="Factor to multiply height by (resize)"
     )
+    
+    
     img_in_parser.add_argument(
         "-nd", "--no_disp", action="store_true", help="Do not view output"
     )
     img_in_parser.add_argument(
         "-do", "--disp_original", action="store_true", help="View original image"
     )
-    # image out parser
+   
+    return img_in_parser
+
+def _get_img_ot_pars() -> ArgumentParser:
+     # image out parser
     img_out_parser = ArgumentParser(add_help=False)
     img_out_parser.add_argument(
         "-oi", "--out_img", type=str, help="Output path of image. Otherwise don't save"
     )
+    return img_out_parser
 
+def main():
+    img_in_parser = _get_img_in_pars()
+    img_out_parser = _get_img_ot_pars()
+   
     # Main parser
     parser = ArgumentParser(
         "mirror.py",
     )
-
+    parser.add_argument("in_img", help="Path to input image")
+    
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    
+    subparsers.add_parser(
+        "view",
+        help="Don't apply any mirroring.",
+        parents=[img_in_parser, img_out_parser]
+    )
     
     mirror_parser = subparsers.add_parser(
         "mirror", help="Mirror a whole image", parents=[img_in_parser, img_out_parser]
@@ -371,7 +392,7 @@ def main():
     multim_parser.add_argument(
         "-dv", "--disp_verbose", help="Display intermediary steps", action="store_true"
     )
-
+    #Spin parser
     spin_parser = subparsers.add_parser(
         "spin_mirror",
         help="Rotate image while applying multi-mirror (creates kaleidoscope)",
@@ -385,7 +406,6 @@ def main():
         choices=range(8),
         help="Permutation of operations [0-7].",
     )
-
     perm_group.add_argument(
         "-cb",
         "--comb",
@@ -393,9 +413,6 @@ def main():
         nargs="+",
         metavar="PLANE",
         help="Custom combination of planes (e.g., lv th tp tn)",
-    )
-    spin_parser.add_argument(
-        "-dv",
     )
     spin_parser.add_argument(
         "-it",
@@ -475,6 +492,17 @@ def main():
         fx = args.factor_x or 1.0
         fy = args.factor_y or 1.0
         img = cv2.resize(img, dsize=None, fx=fx, fy=fy)
+    elif args.auto_size:
+        root = tk.Tk()
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        root.destroy() 
+        max_width = int(screen_width * 0.9)
+        max_height = int(screen_height * 0.9)
+        if img.shape[1] > max_width or img.shape[0] > max_height:
+            scale = min(max_width / img.shape[1], max_height / img.shape[0])
+            img = cv2.resize(img, None, fx=scale, fy=scale)
+        
 
     if args.square:
         img = crop_square(img)
@@ -535,6 +563,13 @@ def main():
             )
             if not args.no_recode:
                 convert_mp4(out_path)
+                
+    elif args.command == 'view':
+        cv2.imshow("Unchanged", img)
+        cv2.waitKey(0)
+        
+        
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
