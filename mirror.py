@@ -369,7 +369,6 @@ def main():
         "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal)",
         choices=["v", "h", "p", "n"],
     )
-
     multim_parser = subparsers.add_parser(
         "multi_mirror",
         help="Create one of the 8 possible images produced by applying 4 planes of symmetry.",
@@ -398,6 +397,12 @@ def main():
     multim_parser.add_argument(
         "-dv", "--disp_verbose", help="Display intermediary steps", action="store_true"
     )
+    multim_parser.add_argument(
+        '-f',
+        '--force',
+        action='store_true',
+        help='Force multi-mirror to use rectangular images when using diagonals.'
+    )
     #Spin parser
     spin_parser = subparsers.add_parser(
         "spin_mirror",
@@ -419,6 +424,12 @@ def main():
         nargs="+",
         metavar="PLANE",
         help="Custom combination of planes (e.g., lv th tp tn)",
+    )
+    spin_parser.add_argument(
+        '-f',
+        '--force',
+        action='store_true',
+        help='Force spin_mirror to use rectangular images.'
     )
     spin_parser.add_argument(
         "-it",
@@ -518,19 +529,22 @@ def main():
         cv2.waitKey(0)
 
     res = img
-
+        
     if args.command == "mirror":
         dic = {"v": 0, "h": 1, "p": 2, "n": 3}
         res = mirror(img, dic[args.plane])
     elif args.command == "multi_mirror":
         if args.comb:
-            res = multi_mirror(img, args.disp_verbose, comb=args.comb)
+            res = multi_mirror(img, args.disp_verbose, comb=args.comb, force=args.force)
         else:
-            res = multi_mirror(img, args.perm_num, args.disp_verbose)
+            res = multi_mirror(img, args.perm_num, args.disp_verbose, force=args.force)
+            
+        if res is None and args.force is False:
+            print('Use [-f] to perform operation ')
+            
 
     if (
         args.command == "mirror"
-        or args.command == "half_mirror"
         or args.command == "multi_mirror"
     ):
         if not args.no_disp and res is not None:
@@ -548,9 +562,9 @@ def main():
             out_path = str(out_path)
 
         if args.comb:
-            func = partial(multi_mirror, comb=args.comb)
+            func = partial(multi_mirror, comb=args.comb, force=args.force)
         else:
-            func = partial(multi_mirror, perm=args.perm_num)
+            func = partial(multi_mirror, perm=args.perm_num, force=args.force)
 
         res_imgs = spin_func(
             img,
