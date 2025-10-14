@@ -10,4 +10,4 @@ flowers/
 mirror_dump
 .venv/
 media/*
-!media/Flowers.jpg
+!media/Flowers*.jpg

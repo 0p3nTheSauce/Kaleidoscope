@@ -199,14 +199,16 @@ def half_mirror(img: MatLike, side: str, inplace: bool = False) -> MatLike:
         return hm
 
 
-def multi_mirror(img: MatLike, perm: int = 0, disp: bool = False, comb: Optional[List[str]] = None) -> MatLike:
+def multi_mirror(
+    img: MatLike, perm: int = 0, disp: bool = False, comb: Optional[List[str]] = None
+) -> MatLike:
     """Create one of the 8 possible images produced by applying 4 planes of symmetry.
 
     Args:
         img (MatLike): Image (h, w, c)
         perm (int, optional): Permutation of operations [0,7]. Defaults to 0.
         disp (bool, optional): Display intermediary images from application of single planes of symmetry. Defaults to False.
-        comb (Optional[List[str]], optional): Combination of planes. 
+        comb (Optional[List[str]], optional): Combination of planes.
 
     Returns:
         MatLike: One of 8 unique possible images with 4 planes of symmetry.
@@ -224,7 +226,6 @@ def multi_mirror(img: MatLike, perm: int = 0, disp: bool = False, comb: Optional
     if comb is None:
         comb = combs[perm]
 
-    
     hm = img.copy()
     for line in comb:
         hm = half_mirror(hm, line)
@@ -276,9 +277,11 @@ def main():
     img_in_parser.add_argument(
         "-do", "--disp_original", action="store_true", help="View original image"
     )
-    #image out parser
+    # image out parser
     img_out_parser = ArgumentParser(add_help=False)
-    img_out_parser.add_argument("-ot", "--out_img", type=str, help="Output path of image. Otherwise don't save")
+    img_out_parser.add_argument(
+        "-ot", "--out_img", type=str, help="Output path of image. Otherwise don't save"
+    )
 
     # Main parser
     parser = ArgumentParser(
@@ -287,29 +290,14 @@ def main():
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # Each subparser inherits from parent
     mirror_parser = subparsers.add_parser(
         "mirror", help="Mirror a whole image", parents=[img_in_parser, img_out_parser]
     )
     mirror_parser.add_argument(
         "plane",
         help="Mirror about this plane of symmetry: "
-            "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal)",
+        "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal)",
         choices=["v", "h", "p", "n"],
-    )
-
-    halfm_parser = subparsers.add_parser(
-        "half_mirror",
-        help="Reflect one half of the image onto the other",
-        parents=[img_in_parser, img_out_parser],
-    )
-    halfm_parser.add_argument(
-        "plane",
-        choices=["th", "bh", "lv", "rv", "tp", "bp", "tn", "bn"],
-        metavar="SIDE+PLANE",
-        help="Side to reflect + plane of symmetry (e.g. th). "
-        "Sides: t/b/l/r (top/bottom/left/right). "
-        "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal). ",
     )
 
     multim_parser = subparsers.add_parser(
@@ -326,14 +314,16 @@ def main():
         choices=range(8),
         help="Permutation of operations [0-7].",
     )
-    
     perm_group.add_argument(
         "-cb",
         "--comb",
         type=str,
-        nargs='+',
-        metavar="PLANE",
-        help="Custom combination of planes (e.g., lv th tp tn)",
+        nargs="+",
+        choices=["th", "bh", "lv", "rv", "tp", "bp", "tn", "bn"],
+        metavar="SIDE+PLANE",
+        help="Side to reflect + plane of symmetry (e.g. th). "
+        "Sides: t/b/l/r (top/bottom/left/right). "
+        "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal). ",
     )
     multim_parser.add_argument(
         "-dv", "--disp_verbose", help="Display intermediary steps", action="store_true"
@@ -352,18 +342,17 @@ def main():
         choices=range(8),
         help="Permutation of operations [0-7].",
     )
-    
+
     perm_group.add_argument(
         "-cb",
         "--comb",
         type=str,
-        nargs='+',
+        nargs="+",
         metavar="PLANE",
         help="Custom combination of planes (e.g., lv th tp tn)",
     )
     spin_parser.add_argument(
-        '-dv',
-        
+        "-dv",
     )
     spin_parser.add_argument(
         "-it",
@@ -454,15 +443,8 @@ def main():
     res = img
 
     if args.command == "mirror":
-        dic = {
-            "v": 0,
-            "h": 1,
-            "p": 2,
-            "n": 3
-        }
+        dic = {"v": 0, "h": 1, "p": 2, "n": 3}
         res = mirror(img, dic[args.plane])
-    elif args.command == "half_mirror":
-        res = half_mirror(img, args.plane)
     elif args.command == "multi_mirror":
         if args.comb:
             res = multi_mirror(img, args.disp_verbose, comb=args.comb)
@@ -477,7 +459,7 @@ def main():
         if not args.no_disp:
             cv2.imshow(args.command, res)
             cv2.waitKey(0)
-            
+
         if args.out_img:
             cv2.imwrite(args.out_img, res)
 
@@ -505,7 +487,9 @@ def main():
         )
 
         if args.out_vid:
-            out_path = images_to_video(res_imgs, args.out_vid, args.frame_rate, args.video_code)
+            out_path = images_to_video(
+                res_imgs, args.out_vid, args.frame_rate, args.video_code
+            )
             if not args.no_recode:
                 convert_mp4(out_path)
 
