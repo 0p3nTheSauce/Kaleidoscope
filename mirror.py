@@ -67,39 +67,6 @@ def mirror(img: MatLike, line: int) -> MatLike:
     else:
         raise ValueError(f"Provided: {line} not one of available lines: 0, 1, 2, 3")
 
-
-
-@njit(cache=True)
-def _project_diag_1chan(
-    img: MatLike,
-    loc: Literal["top", "bottom"],
-    diag: Literal["+", "-"],
-    lpnts: List[int],
-) -> MatLike:
-    """Reflect one half of an image onto the other side (not inplace).
-
-    Args:
-        img (MatLike): Image (h, w)
-        loc (Literal['top', 'bottom']): Location with respect to dividing line.
-        diag (Literal['+', '-']): Sign of the diagonal gradient.
-
-    Returns:
-        MatLike: Image with 1 plane of symmetry.
-    """
-    h, w = img.shape
-    if diag == "+":
-        mr = mir_p(img)
-    else:
-        mr = mir_n(img)
-
-    for x_row in range(h):
-        for x_col in range(w):
-            y_row = lpnts[x_col]
-            # reflect the loc
-            if (loc == "top" and x_row > y_row) or (loc == "bottom" and x_row < y_row):
-                img[x_row, x_col] = mr[x_row, x_col]
-    return img
-
 @njit(cache=True)
 def _project_diag(
     img: MatLike,
@@ -131,51 +98,6 @@ def _project_diag(
                 img[x_row, x_col] = mr[x_row, x_col]
     return img
 
-
-@njit(cache=True)
-def _project_1chan(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
-    """Reflect one half of an image onto the other side (inplace).
-
-    Args:
-        img (MatLike): Image (h, w)
-        side (int): 0 - top half,
-                    1 - bottom half,
-                    2 - right half,
-                    3 - left half,
-                    4 - bottom positive slope,
-                    5 - top positive slope,
-                    6 - bottom negative slope,
-                    7 - top negative slope.
-
-    Returns:
-        MatLike: Image with 1 plane of symmetry.
-    """
-    h, w = img.shape
-
-    match side:
-        case 0:  # reflect top
-            mid = h // 2
-            img[h - mid :, :] = img[:mid, :][::-1, :]
-        case 1:  # reflect bottom
-            mid = h // 2
-            img[:mid, :] = img[h - mid :, :][::-1, :]
-        case 2:  # reflect left
-            mid = w // 2
-            img[:, w - mid :] = img[:, :mid][:, ::-1]
-        case 3:  # reflect right
-            mid = w // 2
-            img[:, :mid] = img[:, w - mid :][:, ::-1]
-        case 4:  # reflect top positive slope
-            img = _project_diag_1chan(img, "top", "+", diagonals[0])
-        case 5:  # reflect bottom positive slope
-            img = _project_diag_1chan(img, "bottom", "+", diagonals[0])
-        case 6:  # reflect top negative slope
-            img = _project_diag_1chan(img, "top", "-", diagonals[1])
-        case 7:  # reflect bottom negative slope
-            img = _project_diag_1chan(img, "bottom", "-", diagonals[1])
-        case _:
-            raise ValueError("Unsupported side code")
-    return img
 
 @njit(cache=True)
 def _project(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
@@ -252,19 +174,14 @@ def half_mirror(img: MatLike, side: str, inplace: bool = False) -> MatLike:
         "tn": 7,
     }
 
-    b, g, r = cv2.split(img)
-    h, w = b.shape
+    h, w, _ = img.shape
     snum = side_codes[side]
     diagonals = lines.make_lines(h, w)
-    b = _project_1chan(b, snum, diagonals)
-    g = _project_1chan(g, snum, diagonals)
-    r = _project_1chan(r, snum, diagonals)
     if inplace:
-        img = cv2.merge((b, g, r), dst=img)
-        return img
+        return _project(img, snum, diagonals)
     else:
-        hm = cv2.merge((b, g, r))
-        return hm
+        cp = img.copy()
+        return _project(cp, snum, diagonals)
 
 
 def multi_mirror(

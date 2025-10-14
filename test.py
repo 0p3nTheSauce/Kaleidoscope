@@ -115,18 +115,16 @@ def test_pd1c():
     cv2.waitKey(0)
 
 
-def test_p1c(side=0):
+def test_p(side=0):
     img = test_crop()
 
     b, g, r = cv2.split(img)
     h, w = b.shape
     diagonals = lines.make_lines(h, w)
 
-    nb = mirror._project_1chan(b, side, diagonals)
-    ng = mirror._project_1chan(g, side, diagonals)
-    nr = mirror._project_1chan(r, side, diagonals)
-
-    nimg = cv2.merge((nb, ng, nr))
+    # nb = mirror._project_1chan(b, side, diagonals)
+    cp = img.copy()
+    nimg = mirror._project(cp, side, diagonals)
 
     side_codes = {
         0 : "top",
@@ -343,9 +341,10 @@ if __name__ == '__main__':
     # test_pd1c()
     # test_p1c(int(sys.argv[1]))
     # test_remove_diag_p()
-    # test_half_mirror(desired_h=2000)
+    test_half_mirror(desired_h=2000)
     # test_spin_mirror2(1500)
     # test_multi_mirror2(1500)
-    test_mirs()
+    # test_mirs()
+    
     cv2.destroyAllWindows()
         
