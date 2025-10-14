@@ -98,8 +98,56 @@ def _project_diag(
                 img[x_row, x_col] = mr[x_row, x_col]
     return img
 
-
 @njit(cache=True)
+def _project_diag_safe(
+    img: MatLike,
+    loc: Literal["top", "bottom"],
+    diag: Literal["+", "-"],
+    lpnts: List[int],
+) -> MatLike:
+    """Reflect one half of an image onto the other side (not inplace). This 
+    is the safe version which can be used with non rectangular images.
+
+    Args:
+        img (MatLike): Image (h, w, c)
+        loc (Literal['top', 'bottom']): Location with respect to dividing line.
+        diag (Literal['+', '-']): Sign of the diagonal gradient.
+
+    Returns:
+        MatLike: Image with 1 plane of symmetry.
+    """
+    h, w, _ = img.shape
+    if diag == "+":
+        mr = mir_p(img)
+    else:
+        mr = mir_n(img)
+
+    mr_cp = mr.copy()
+
+    mw, mh, _ = mr.shape
+    i = 0
+    while mh < w and i < 3:
+        mr = np.hstack((mr, mr_cp[:, :h-w, :]))
+        mw, mh, _ = mr.shape
+        i += 1
+    
+    mr_cp = mr.copy()
+    
+    i = 0
+    while mw < h and i < 3:
+        mr = np.vstack((mr, mr_cp[:h-w, :, :]))
+        mw, mh, _ = mr.shape
+        i += 1
+    
+    for x_row in range(h):
+        for x_col in range(w):
+            y_row = lpnts[x_col]
+            # reflect the loc
+            if (loc == "top" and x_row > y_row) or (loc == "bottom" and x_row < y_row):
+                img[x_row, x_col] = mr[x_row, x_col]
+    return img
+
+@njit(cach=True)
 def _project(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
     """Reflect one half of an image onto the other side (inplace).
 
@@ -113,7 +161,7 @@ def _project(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
                     5 - top positive slope,
                     6 - bottom negative slope,
                     7 - top negative slope.
-
+                    
     Returns:
         MatLike: Image with 1 plane of symmetry.
     """
@@ -176,6 +224,16 @@ def half_mirror(img: MatLike, side: str, inplace: bool = False) -> MatLike:
 
     h, w, _ = img.shape
     snum = side_codes[side]
+    
+    if h != w and snum > 3:
+        #this is conceptually because when rotating a rectangle around a diagonal by 180 deg, 
+        #the rectangle will not have the same orientation when it started.  In code, this 
+        # manifests in the project_diag function, where the source matrix has different shape 
+        #to the destination. For some reason instead of throwing an index out of bounds error,
+        # crashing, it seems to be reading from adjacent memory locations (probably a result of 
+        # njit)
+        print("Warning: non-square images produced undefined behaviour when using diagonals")
+    
     diagonals = lines.make_lines(h, w)
     if inplace:
         return _project(img, snum, diagonals)

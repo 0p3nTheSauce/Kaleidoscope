@@ -183,15 +183,17 @@ def test_spin_mirror2(desired_h):
 
 
 def test_half_mirror(desired_h:int=500):
-    img = test_crop(desired_h)
+    # img = test_crop(desired_h)
+    # img = _get_ex_img('./media/Flowers.jpg', desired_h)
+    img = _get_ex_img('./media/Drawing.png', desired_h)
     side_codes = ['th', 'bh', 'lv', 'rv', 'bp', 'tp', 'bn','tn']
-    for c in side_codes:
-        hm = mirror.half_mirror(img, c, inplace=True)
-        cv2.imshow("Half mirrored", hm)
-        cv2.waitKey(1)
-    # hm = mirror.half_mirror(img, side_codes[4])
-    # cv2.imshow("half mirror", hm) 
-    # cv2.waitKey(0)
+    # for c in side_codes:
+    #     hm = mirror.half_mirror(img, c, inplace=True)
+    #     cv2.imshow("Half mirrored", hm)
+    #     cv2.waitKey(0)
+    hm = mirror.half_mirror(img, side_codes[6])
+    cv2.imshow("half mirror", hm) 
+    cv2.waitKey(0)
     cv2.imshow("original", img)
     cv2.waitKey(0)
 
@@ -353,10 +355,10 @@ if __name__ == '__main__':
     # test_pd1c()
     # test_p1c(int(sys.argv[1]))
     # test_remove_diag_p()
-    # test_half_mirror(desired_h=2000)
+    test_half_mirror()
     # test_spin_mirror2(1500)
     # test_multi_mirror2(1500)
-    test_mirs()
+    # test_mirs()
     
     cv2.destroyAllWindows()
         
