@@ -328,8 +328,20 @@ def test_mirs():
     b, g, r = cv2.split(img)
     b, g, r = mir_p_1chan(b), mir_p_1chan(g), mir_p_1chan(r)
     
-    mirp = cv2.merge((b, g, r))
-    cv2.imshow("mir_p", mirp)
+    mirp2 = cv2.merge((b, g, r))
+    cv2.imshow("mir_p1chan", mirp2)
+    cv2.waitKey(0)
+
+    mirn = mir_n(img)
+    
+    cv2.imshow("mir_n", mirn)
+    cv2.waitKey(0)
+    
+    b, g, r = cv2.split(img)
+    b, g, r = mir_n_1chan(b), mir_n_1chan(g), mir_n_1chan(r)
+    
+    mirn2 = cv2.merge((b, g, r))
+    cv2.imshow("mir_n1chan", mirn2)
     cv2.waitKey(0)
 
 
@@ -341,10 +353,10 @@ if __name__ == '__main__':
     # test_pd1c()
     # test_p1c(int(sys.argv[1]))
     # test_remove_diag_p()
-    test_half_mirror(desired_h=2000)
+    # test_half_mirror(desired_h=2000)
     # test_spin_mirror2(1500)
     # test_multi_mirror2(1500)
-    # test_mirs()
+    test_mirs()
     
     cv2.destroyAllWindows()
         
