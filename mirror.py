@@ -147,7 +147,7 @@ def _project_diag_safe(
                 img[x_row, x_col] = mr[x_row, x_col]
     return img
 
-@njit(cach=True)
+@njit(cache=True)
 def _project(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
     """Reflect one half of an image onto the other side (inplace).
 
@@ -332,7 +332,7 @@ def main():
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
+    
     mirror_parser = subparsers.add_parser(
         "mirror", help="Mirror a whole image", parents=[img_in_parser, img_out_parser]
     )
