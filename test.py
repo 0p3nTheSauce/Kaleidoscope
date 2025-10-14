@@ -315,6 +315,25 @@ def test_multi_mirror2(desired_h):
     23 Combination: ['tn', 'tp', 'th', 'lv']
     '''
 
+def test_mirs():
+    from mat import mir_p_1chan, mir_n_1chan, mir_p, mir_n
+    img = cv2.imread('media/Drawing.png', cv2.IMREAD_COLOR)
+    
+    cv2.imshow("original", img)
+    cv2.waitKey(0)
+    
+    mirp = mir_p(img)
+    
+    cv2.imshow("mir_p", mirp)
+    cv2.waitKey(0)
+
+    b, g, r = cv2.split(img)
+    b, g, r = mir_p_1chan(b), mir_p_1chan(g), mir_p_1chan(r)
+    
+    mirp = cv2.merge((b, g, r))
+    cv2.imshow("mir_p", mirp)
+    cv2.waitKey(0)
+
 
 if __name__ == '__main__':
     # test_make_horiz()
@@ -326,6 +345,7 @@ if __name__ == '__main__':
     # test_remove_diag_p()
     # test_half_mirror(desired_h=2000)
     # test_spin_mirror2(1500)
-    test_multi_mirror2(1500)
+    # test_multi_mirror2(1500)
+    test_mirs()
     cv2.destroyAllWindows()
         

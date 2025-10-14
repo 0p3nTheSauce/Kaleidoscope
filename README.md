@@ -30,7 +30,7 @@ pip install -r requirements.txt
 
 ```bash
 # Reflect images across 4-planes of symmetry
-python mirror.py multi_mirror input.jpg -pn 0 -ot kaleidoscope_0.jpg
+python mirror.py multi_mirror input.jpg -pn 0 -oi kaleidoscope_0.jpg
 
 # Create a kaleidoscope video (360° rotation)
 python mirror.py spin_mirror input.jpg -pn 0 -ov kaleidoscope.mp4
@@ -51,22 +51,22 @@ python mirror.py mirror INPUT_IMAGE PLANE [OPTIONS]
 **Planes:**
 - `h` - Horizontal
 - `v` - Vertical  
-- `p` - Positive diagonal (/)
-- `n` - Negative diagonal (\)
+- `p` - Positive diagonal 
+- `n` - Negative diagonal 
 
 **Example:**
 ```bash
-python mirror.py mirror photo.jpg v -ot mirrored.jpg
+python mirror.py mirror photo.jpg v -oi mirrored.jpg
 ```
 
 ---
 
-#### `half_mirror` - Reflect one side onto the other
+#### `multi_mirror` - Apply multiple planes of symmetry
 
-Reflect one half of the image onto the other side to create a single plane of symmetry.
+Four planes of symmetry have been implemented, if all are applied, there are 8 possible resulting images (for a given crop). Each of these images can be selected with the permutation flag. 
 
 ```bash
-python mirror.py half_mirror INPUT_IMAGE SIDE+PLANE [OPTIONS]
+python mirror.py multi_mirror INPUT_IMAGE (-pn PERMUTATION | -cb PLANES...) [OPTIONS]
 ```
 
 **Side + Plane combinations:**
@@ -75,29 +75,15 @@ python mirror.py half_mirror INPUT_IMAGE SIDE+PLANE [OPTIONS]
 
 **Valid combinations:** `th`, `bh`, `lv`, `rv`, `tp`, `bp`, `tn`, `bn`
 
-**Example:**
-```bash
-python mirror.py half_mirror photo.jpg lv -ot symmetric.jpg
-```
 
----
+**Permutations (0-7):** Combinations of 4 planes of symmetry which produce unique images (e.g. lv th tp tn) .
 
-#### `multi_mirror` - Apply 4 planes of symmetry
-
-Create one of 8 possible kaleidoscope patterns by applying 4 planes of symmetry.
-
-```bash
-python mirror.py multi_mirror INPUT_IMAGE (-pn PERMUTATION | -cb PLANES...) [OPTIONS]
-```
-
-**Permutations (0-7):** Different combinations of 4 symmetry planes
-
-**Custom combinations:** Specify your own sequence of planes (e.g., `-cb lv th tp tn`)
+**Custom combinations:** Apply variable number or combination of mirrors (e.g. `-cb lv th`)
 
 **Example:**
 ```bash
-python mirror.py multi_mirror photo.jpg -pn 0 -ot kaleidoscope.jpg
-python mirror.py multi_mirror photo.jpg -cb lv th tp bn -ot custom.jpg
+python mirror.py multi_mirror photo.jpg -pn 0 -oi kaleidoscope.jpg
+python mirror.py multi_mirror photo.jpg -cb lv th -oi custom.jpg
 ```
 
 ---
@@ -139,7 +125,7 @@ python mirror.py spin_mirror photo.jpg -pn 0 -it 180 -dg 2 -ov fast.mp4
 - `-dv, --disp_verbose` - Show intermediate steps (multi_mirror only)
 
 **Output:**
-- `-ot PATH` - Save output image
+- `-oi PATH` - Save output image
 - `-od DIR` - Save frames to directory (spin_mirror only)
 - `-ov PATH` - Save output video (spin_mirror only)
 
@@ -169,7 +155,7 @@ optional arguments:
 #### mirror command
 ```
 usage: mirror.py mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-fx FACTOR_X] [-fy FACTOR_Y] 
-                        [-nd] [-do] [-ot OUT_IMG] in_img {v,h,p,n}
+                        [-nd] [-do] [-oi OUT_IMG] in_img {v,h,p,n}
 
 positional arguments:
   in_img                Path to input image
@@ -187,14 +173,14 @@ optional arguments:
                         Factor to multiply height by (resize)
   -nd, --no_disp        Do not view output
   -do, --disp_original  View original image
-  -ot OUT_IMG, --out_img OUT_IMG
+  -oi OUT_IMG, --out_img OUT_IMG
                         Output path of image. Otherwise don't save
 ```
 
 #### half_mirror command
 ```
 usage: mirror.py half_mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-fx FACTOR_X] [-fy FACTOR_Y]
-                             [-nd] [-do] [-ot OUT_IMG] in_img SIDE+PLANE
+                             [-nd] [-do] [-oi OUT_IMG] in_img SIDE+PLANE
 
 positional arguments:
   in_img                Path to input image
@@ -213,14 +199,14 @@ optional arguments:
                         Factor to multiply height by (resize)
   -nd, --no_disp        Do not view output
   -do, --disp_original  View original image
-  -ot OUT_IMG, --out_img OUT_IMG
+  -oi OUT_IMG, --out_img OUT_IMG
                         Output path of image. Otherwise don't save
 ```
 
 #### multi_mirror command
 ```
 usage: mirror.py multi_mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-fx FACTOR_X] [-fy FACTOR_Y]
-                              [-nd] [-do] [-ot OUT_IMG] (-pn {0,1,2,3,4,5,6,7} | -cb PLANE [PLANE ...])
+                              [-nd] [-do] [-oi OUT_IMG] (-pn {0,1,2,3,4,5,6,7} | -cb PLANE [PLANE ...])
                               [-dv] in_img
 
 positional arguments:
@@ -237,7 +223,7 @@ optional arguments:
                         Factor to multiply height by (resize)
   -nd, --no_disp        Do not view output
   -do, --disp_original  View original image
-  -ot OUT_IMG, --out_img OUT_IMG
+  -oi OUT_IMG, --out_img OUT_IMG
                         Output path of image. Otherwise don't save
   -pn {0,1,2,3,4,5,6,7}, --perm_num {0,1,2,3,4,5,6,7}
                         Permutation of operations [0-7].
@@ -298,28 +284,19 @@ optional arguments:
 ### Simple Mirror
 ```bash
 # Vertical mirror (left-right flip)
-python mirror.py mirror landscape.jpg v -ot mirrored_v.jpg
+python mirror.py mirror landscape.jpg v -oi mirrored_v.jpg
 
 # Horizontal mirror (top-bottom flip)
-python mirror.py mirror portrait.jpg h -ot mirrored_h.jpg
-```
-
-### Half Mirror (Create Symmetry)
-```bash
-# Reflect left side onto right (vertical symmetry)
-python mirror.py half_mirror face.jpg lv -ot symmetric_face.jpg
-
-# Reflect top onto bottom (horizontal symmetry)
-python mirror.py half_mirror building.jpg th -ot symmetric_building.jpg
+python mirror.py mirror portrait.jpg h -oi mirrored_h.jpg
 ```
 
 ### Multi-Mirror Kaleidoscope
 ```bash
 # Create kaleidoscope pattern with 4 planes of symmetry
-python mirror.py multi_mirror flower.jpg -pn 0 -sq -ot kaleidoscope.jpg
+python mirror.py multi_mirror flower.jpg -pn 0 -sq -oi kaleidoscope.jpg
 
 # Custom plane combination
-python mirror.py multi_mirror texture.jpg -cb lv th tp tn -ot custom_pattern.jpg
+python mirror.py multi_mirror texture.jpg -cb lv th tp tn -oi custom_pattern.jpg
 ```
 
 ### Rotating Kaleidoscope Video
@@ -337,10 +314,10 @@ python mirror.py spin_mirror mandala.jpg -pn 0 -od ./frames/ -sq
 ### Image Preprocessing
 ```bash
 # Resize to HD and create kaleidoscope
-python mirror.py multi_mirror photo.jpg -ns 1920 1080 -sq -pn 0 -ot hd_kaleidoscope.jpg
+python mirror.py multi_mirror photo.jpg -ns 1920 1080 -sq -pn 0 -oi hd_kaleidoscope.jpg
 
 # Scale by factor and mirror
-python mirror.py mirror large_image.jpg h -fx 0.5 -fy 0.5 -ot smaller_mirror.jpg
+python mirror.py mirror large_image.jpg h -fx 0.5 -fy 0.5 -oi smaller_mirror.jpg
 ```
 
 ## Features
