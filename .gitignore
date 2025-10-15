@@ -12,4 +12,4 @@ flowers/
 mirror_dump
 .venv/
 media/*
-
+!assets/*
