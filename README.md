@@ -289,43 +289,36 @@ options:
 
 ## Examples
 
+### View
+
+```bash
+#resize and crop square
+python mirror.py view examples/Fern.png -fx 0.15 -fy 0.15 -sq -oi examples/Fern_as_sq.png
+```
+
+![Auto-sized and square cropped Fern.png](./examples/Fern_as_sq.png)
+
 ### Simple Mirror
 ```bash
 # Vertical mirror (left-right flip)
-python mirror.py mirror landscape.jpg v -oi mirrored_v.jpg
+python mirror.py mirror ./examples/Fern_as_sq.png v -oi ./examples/Fern_v.png
 
-# Horizontal mirror (top-bottom flip)
-python mirror.py mirror portrait.jpg h -oi mirrored_h.jpg
 ```
 
-### Multi-Mirror Kaleidoscope
+![Horizontally flipped Fern.png](./examples/Fern_h.png)
+
+### Multi-Mirror
 ```bash
 # Create kaleidoscope pattern with 4 planes of symmetry
-python mirror.py multi_mirror flower.jpg -pn 0 -sq -oi kaleidoscope.jpg
-
-# Custom plane combination
-python mirror.py multi_mirror texture.jpg -cb lv th -oi custom_pattern.jpg
+python mirror.py multi_mirror ./examples/Fern_as_sq.png -pn 0 -oi ./examples/Fern_0.png
 ```
 
-### Rotating Kaleidoscope Video
+![Four plane symmetry Fern.png](./examples/Fern_0.png)
+
+### Rotating Multi-Mirror
 ```bash
 # Standard 360° rotation at 30 fps
-python mirror.py spin_mirror sunset.jpg -pn 0 -sq -ov sunset_kaleidoscope.mp4
-
-# Fast rotation: 180 iterations, 2° per step
-python mirror.py spin_mirror abstract.jpg -pn 3 -it 180 -dg 2 -fr 60 -ov fast_spin.mp4
-
-# Save individual frames to directory
-python mirror.py spin_mirror mandala.jpg -pn 0 -od ./frames/ -sq
-```
-
-### Image Preprocessing
-```bash
-# Resize to HD and create kaleidoscope
-python mirror.py multi_mirror photo.jpg -ns 1920 1080 -sq -pn 0 -oi hd_kaleidoscope.jpg
-
-# Scale by factor and mirror
-python mirror.py mirror large_image.jpg h -fx 0.5 -fy 0.5 -oi smaller_mirror.jpg
+python mirror.py spin_mirror sunset.jpg -sq -ov sunset_kaleidoscope.mp4
 ```
 
 ## Features

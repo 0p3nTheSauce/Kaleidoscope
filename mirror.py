@@ -543,7 +543,8 @@ def main():
             print('Use [-f] to perform operation or [-sq] to convert to square')
             
     if (
-        args.command == "mirror"
+        args.command == 'view'
+        or args.command == "mirror"
         or args.command == "multi_mirror"
     ):
         if not args.no_disp and res is not None:
