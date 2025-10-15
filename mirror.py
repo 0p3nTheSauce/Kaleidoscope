@@ -354,7 +354,7 @@ def main():
     
     subparsers.add_parser(
         "view",
-        help="Don't apply any mirroring.",
+        help="Don't apply any mirroring",
         parents=[img_in_parser, img_out_parser]
     )
     
@@ -369,7 +369,7 @@ def main():
     )
     multim_parser = subparsers.add_parser(
         "multi_mirror",
-        help="Create one of the 8 possible images produced by applying 4 planes of symmetry.",
+        help="Create images with up to 4 planes of symmetry",
         parents=[img_in_parser, img_out_parser],
     )
     # Provide either perm_num or comb
@@ -399,12 +399,12 @@ def main():
         '-f',
         '--force',
         action='store_true',
-        help='Force multi-mirror to use rectangular images when using diagonals.'
+        help='Force multi_mirror to use rectangular images when using diagonals.'
     )
     #Spin parser
     spin_parser = subparsers.add_parser(
         "spin_mirror",
-        help="Rotate image while applying multi-mirror (creates kaleidoscope)",
+        help="Rotate image while applying multi_mirror (creates kaleidoscope)",
         parents=[img_in_parser],
     )
     perm_group = spin_parser.add_mutually_exclusive_group()

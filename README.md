@@ -1,6 +1,6 @@
 # Kaleidoscope
 
-Create mirrored images and kaleidoscope videos with multiple planes of symmetry.
+Create mirrored images and kaleidoscope videos with multiple planes of symmetry. Liew view or save outputs. Implemented with openCV, use Esc or Shift to close windows.
 
 ## Table of Contents
 
@@ -45,7 +45,7 @@ python mirror.py spin_mirror input.jpg -ov kaleidoscope.mp4
 Useful for previewing the image with resizing and square cropping
 
 ```bash
-python mirror.py INPUT_IMAGE view [OPTIONS]
+python mirror.py view INPUT_IMAGE [OPTIONS]
 ```
 
 #### `mirror` - Mirror entire image across a plane
@@ -53,7 +53,7 @@ python mirror.py INPUT_IMAGE view [OPTIONS]
 Mirror the complete image across a single plane of symmetry.
 
 ```bash
-python mirror.py INPUT_IMAGE mirror PLANE [OPTIONS]
+python mirror.py mirror INPUT_IMAGE PLANE [OPTIONS]
 ```
 
 **Planes:**
@@ -64,14 +64,14 @@ python mirror.py INPUT_IMAGE mirror PLANE [OPTIONS]
 
 **Example:**
 ```bash
-python mirror.py INPUT_IMAGE mirror v -oi mirrored.jpg
+python mirror.py mirror input.jpg v -oi mirrored.jpg
 ```
 
 ---
 
 #### `multi_mirror` - Apply multiple planes of symmetry
 
-Four planes of symmetry have been implemented, if all are applied, there are 8 possible resulting images (for a given crop). Each of these images can be selected with the permutation flag. 
+Four planes of symmetry have been implemented, if all are applied, there are 8 possible resulting images (for a given crop). Each of these images can be selected with the [-pn] flag. Otherwise custom plane combinations can be used with the [-cb] flag.
 
 ```bash
 python mirror.py multi_mirror INPUT_IMAGE (-pn PERMUTATION | -cb PLANES...) [OPTIONS]
@@ -98,23 +98,26 @@ python mirror.py multi_mirror photo.jpg -cb lv th -oi custom.jpg
 
 #### `spin_mirror` - Create rotating kaleidoscope videos
 
-Rotate the image while applying multi-mirror transformations to create mesmerizing kaleidoscope animations.
+Rotate the image while applying multi-mirror transformations to create kaleidoscopic animations. By default, it produces one full rotation of the image (360 degrees), applying 8 planes of symmetry every 1 degree. Press Esc to terminated live view.
 
 ```bash
-python mirror.py spin_mirror INPUT_IMAGE (-pn PERMUTATION | -cb PLANES...) [OPTIONS]
+python mirror.py spin_mirror INPUT_IMAGE [OPTIONS]
 ```
 
 **Key options:**
+- `-pn PERMUTATION_NUM` - Same as multi_mirror
+- `-cb PLANES - Same as multi_mirror
 - `-ov OUTPUT.mp4` - Save as video
 - `-od OUTPUT_DIR/` - Save individual frames
 - `-it N` - Number of iterations (default: 360)
 - `-dg N` - Degrees per iteration (default: 1)
-- `-fr FPS` - Frame rate (default: 30.0)
+- `-wt N` - Wait time (ms) between viewing individual frames during live output (cv2.waitKey style)
+- `-fr FPS` - Frame rate of output video (default: 30.0)
 
 **Example:**
 ```bash
-python mirror.py spin_mirror photo.jpg -pn 0 -ov kaleidoscope.mp4 -fr 30
-python mirror.py spin_mirror photo.jpg -pn 0 -it 180 -dg 2 -ov fast.mp4
+python mirror.py spin_mirror photo.jpg -ov kaleidoscope.mp4 
+python mirror.py spin_mirror photo.jpg -it 180 -dg 2 -ov -fr 60 fast.mp4
 ```
 
 ---
@@ -122,13 +125,14 @@ python mirror.py spin_mirror photo.jpg -pn 0 -it 180 -dg 2 -ov fast.mp4
 ### Common Options
 
 **Image preprocessing:**
-- `-sq, --square` - Crop to center square before operations
+- `-sq, --square` - Crop to center square before operations (important when mirroring about diagonals)
+- `-as, --auto_size` - Automatically scale window based on screen size
 - `-ns WIDTH HEIGHT` - Resize to specific dimensions (e.g., `-ns 1920 1080`)
 - `-fx FACTOR` - Scale width by factor
 - `-fy FACTOR` - Scale height by factor
 
 **Display:**
-- `-nd, --no_disp` - Don't display output
+- `-nd, --no_disp` - Don't display live view
 - `-do, --disp_original` - Display original image
 - `-dv, --disp_verbose` - Show intermediate steps (multi_mirror only)
 
@@ -146,35 +150,33 @@ python mirror.py spin_mirror photo.jpg -pn 0 -it 180 -dg 2 -ov fast.mp4
 
 #### Main help
 ```
-usage: mirror.py [-h] {mirror,half_mirror,multi_mirror,spin_mirror} ...
+usage: mirror.py [-h] {view,mirror,multi_mirror,spin_mirror} ...
 
 positional arguments:
-  {mirror,half_mirror,multi_mirror,spin_mirror}
+  {view,mirror,multi_mirror,spin_mirror}
                         Available commands
+    view                Don't apply any mirroring
     mirror              Mirror a whole image
-    half_mirror         Reflect one half of the image onto the other
-    multi_mirror        Create one of the 8 possible images produced by applying 4 planes of symmetry.
-    spin_mirror         Rotate image while applying multi-mirror (creates kaleidoscope)
+    multi_mirror        Create images with up to 4 planes of symmetry
+    spin_mirror         Rotate image while applying multi_mirror (creates kaleidoscope)
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
 ```
 
-#### mirror command
+#### view command
 ```
-usage: mirror.py mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-fx FACTOR_X] [-fy FACTOR_Y] 
-                        [-nd] [-do] [-oi OUT_IMG] in_img {v,h,p,n}
+usage: mirror.py view [-h] [-sq] [-ns WIDTH HEIGHT] [-as] [-fx FACTOR_X] [-fy FACTOR_Y] [-nd] [-do] [-oi OUT_IMG] in_img
 
 positional arguments:
   in_img                Path to input image
-  plane                 Mirror about this plane of symmetry: Planes: h/v/p/n 
-                        (horizontal/vertical/+diagonal/-diagonal)
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -sq, --square         Crop to centre square before other operations
   -ns WIDTH HEIGHT, --new_size WIDTH HEIGHT
                         New size as width height (e.g., -ns 1920 1080)
+  -as, --auto_size
   -fx FACTOR_X, --factor_x FACTOR_X
                         Factor to multiply width by (resize)
   -fy FACTOR_Y, --factor_y FACTOR_Y
@@ -185,22 +187,20 @@ optional arguments:
                         Output path of image. Otherwise don't save
 ```
 
-#### half_mirror command
+#### mirror command
 ```
-usage: mirror.py half_mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-fx FACTOR_X] [-fy FACTOR_Y]
-                             [-nd] [-do] [-oi OUT_IMG] in_img SIDE+PLANE
+usage: mirror.py mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-as] [-fx FACTOR_X] [-fy FACTOR_Y] [-nd] [-do] [-oi OUT_IMG] in_img {v,h,p,n}
 
 positional arguments:
   in_img                Path to input image
-  SIDE+PLANE            Side to reflect + plane of symmetry (e.g. th). 
-                        Sides: t/b/l/r (top/bottom/left/right). 
-                        Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal).
+  {v,h,p,n}             Mirror about this plane of symmetry: Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal)
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -sq, --square         Crop to centre square before other operations
   -ns WIDTH HEIGHT, --new_size WIDTH HEIGHT
                         New size as width height (e.g., -ns 1920 1080)
+  -as, --auto_size
   -fx FACTOR_X, --factor_x FACTOR_X
                         Factor to multiply width by (resize)
   -fy FACTOR_Y, --factor_y FACTOR_Y
@@ -213,18 +213,17 @@ optional arguments:
 
 #### multi_mirror command
 ```
-usage: mirror.py multi_mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-fx FACTOR_X] [-fy FACTOR_Y]
-                              [-nd] [-do] [-oi OUT_IMG] (-pn {0,1,2,3,4,5,6,7} | -cb PLANE [PLANE ...])
-                              [-dv] in_img
+usage: mirror.py multi_mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-as] [-fx FACTOR_X] [-fy FACTOR_Y] [-nd] [-do] [-oi OUT_IMG] (-pn {0,1,2,3,4,5,6,7} | -cb SIDE+PLANE [SIDE+PLANE ...]) [-dv] [-f] in_img
 
 positional arguments:
   in_img                Path to input image
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -sq, --square         Crop to centre square before other operations
   -ns WIDTH HEIGHT, --new_size WIDTH HEIGHT
                         New size as width height (e.g., -ns 1920 1080)
+  -as, --auto_size
   -fx FACTOR_X, --factor_x FACTOR_X
                         Factor to multiply width by (resize)
   -fy FACTOR_Y, --factor_y FACTOR_Y
@@ -235,27 +234,27 @@ optional arguments:
                         Output path of image. Otherwise don't save
   -pn {0,1,2,3,4,5,6,7}, --perm_num {0,1,2,3,4,5,6,7}
                         Permutation of operations [0-7].
-  -cb PLANE [PLANE ...], --comb PLANE [PLANE ...]
-                        Custom combination of planes (e.g., lv th tp tn)
+  -cb SIDE+PLANE [SIDE+PLANE ...], --comb SIDE+PLANE [SIDE+PLANE ...]
+                        Side to reflect + plane of symmetry (e.g. th). Sides: t/b/l/r (top/bottom/left/right). Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal).
   -dv, --disp_verbose   Display intermediary steps
+  -f, --force           Force multi_mirror to use rectangular images when using diagonals.
 ```
 
 #### spin_mirror command
 ```
-usage: mirror.py spin_mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-fx FACTOR_X] [-fy FACTOR_Y]
-                             [-nd] [-do] (-pn {0,1,2,3,4,5,6,7} | -cb PLANE [PLANE ...])
-                             [-it ITERATIONS] [-dg DEGREES] [-wt WAIT] [-ix INDEX]
-                             [-od OUT_DIR] [-ov OUT_VID] [-fr FRAME_RATE] [-vc VIDEO_CODE]
-                             [-nr] in_img
+usage: mirror.py spin_mirror [-h] [-sq] [-ns WIDTH HEIGHT] [-as] [-fx FACTOR_X] [-fy FACTOR_Y] [-nd] [-do] [-pn {0,1,2,3,4,5,6,7} | -cb PLANE [PLANE ...]] [-f] [-it ITERATIONS] [-dg DEGREES] [-wt WAIT]
+                             [-ix INDEX] [-od OUT_DIR] [-ov OUT_VID] [-fr FRAME_RATE] [-vc VIDEO_CODE] [-nr]
+                             in_img
 
 positional arguments:
   in_img                Path to input image
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -sq, --square         Crop to centre square before other operations
   -ns WIDTH HEIGHT, --new_size WIDTH HEIGHT
                         New size as width height (e.g., -ns 1920 1080)
+  -as, --auto_size
   -fx FACTOR_X, --factor_x FACTOR_X
                         Factor to multiply width by (resize)
   -fy FACTOR_Y, --factor_y FACTOR_Y
@@ -266,12 +265,13 @@ optional arguments:
                         Permutation of operations [0-7].
   -cb PLANE [PLANE ...], --comb PLANE [PLANE ...]
                         Custom combination of planes (e.g., lv th tp tn)
+  -f, --force           Force spin_mirror to use rectangular images.
   -it ITERATIONS, --iterations ITERATIONS
                         Number of times to apply function and rotation. Defaults to 360.
   -dg DEGREES, --degrees DEGREES
                         Degrees to rotate per iteration. Defaults to 1.
   -wt WAIT, --wait WAIT
-                        Wait period between application (ms). Defaults to 1.
+                        Wait peroid between application (ms). Defaults to 1.
   -ix INDEX, --index INDEX
                         For enumerating image paths. Defaults to 0.
   -od OUT_DIR, --out_dir OUT_DIR
@@ -304,7 +304,7 @@ python mirror.py mirror portrait.jpg h -oi mirrored_h.jpg
 python mirror.py multi_mirror flower.jpg -pn 0 -sq -oi kaleidoscope.jpg
 
 # Custom plane combination
-python mirror.py multi_mirror texture.jpg -cb lv th tp tn -oi custom_pattern.jpg
+python mirror.py multi_mirror texture.jpg -cb lv th -oi custom_pattern.jpg
 ```
 
 ### Rotating Kaleidoscope Video

@@ -11,3 +11,4 @@ mirror_dump
 .venv/
 media/*
 !media/Flowers*.jpg
+!media/Fern.png
