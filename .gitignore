@@ -11,6 +11,6 @@ squircle/
 flowers/
 mirror_dump
 .venv/
-media/*
+media/
 !assets/*
 
