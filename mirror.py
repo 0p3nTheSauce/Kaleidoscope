@@ -19,7 +19,7 @@ CV_FLIP_VERT = 0
 CV_FLIP_HORIZ = 1
 
 
-def crop_square(img: MatLike) -> MatLike:
+def crop_square(img: MatLike, ) -> MatLike:
     """Centre crops the largest square from an image
 
     Args:
@@ -295,6 +295,8 @@ def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
 def _get_img_in_pars() -> ArgumentParser:
     
     img_in_parser = ArgumentParser(add_help=False)
+    img_in_parser.add_argument("in_img", help="Path to input image")
+    
     img_in_parser.add_argument(
         "-sq",
         "--square",
@@ -347,7 +349,6 @@ def main():
     parser = ArgumentParser(
         "mirror.py",
     )
-    parser.add_argument("in_img", help="Path to input image")
     
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     

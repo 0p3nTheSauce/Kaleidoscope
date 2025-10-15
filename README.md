@@ -30,22 +30,30 @@ pip install -r requirements.txt
 
 ```bash
 # Reflect images across 4-planes of symmetry
-python mirror.py multi_mirror input.jpg -pn 0 -oi kaleidoscope_0.jpg
+python mirror.py multi_mirror input.jpg -oi kaleidoscope_0.jpg
 
 # Create a kaleidoscope video (360° rotation)
-python mirror.py spin_mirror input.jpg -pn 0 -ov kaleidoscope.mp4
+python mirror.py spin_mirror input.jpg -ov kaleidoscope.mp4
 ```
 
 ## Usage
 
 ### Commands Overview
 
+#### `view` - View the immage with no mirroring
+
+Useful for previewing the image with resizing and square cropping
+
+```bash
+python mirror.py INPUT_IMAGE view [OPTIONS]
+```
+
 #### `mirror` - Mirror entire image across a plane
 
 Mirror the complete image across a single plane of symmetry.
 
 ```bash
-python mirror.py mirror INPUT_IMAGE PLANE [OPTIONS]
+python mirror.py INPUT_IMAGE mirror PLANE [OPTIONS]
 ```
 
 **Planes:**
@@ -56,7 +64,7 @@ python mirror.py mirror INPUT_IMAGE PLANE [OPTIONS]
 
 **Example:**
 ```bash
-python mirror.py mirror photo.jpg v -oi mirrored.jpg
+python mirror.py INPUT_IMAGE mirror v -oi mirrored.jpg
 ```
 
 ---
