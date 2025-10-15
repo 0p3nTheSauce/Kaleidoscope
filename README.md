@@ -30,7 +30,7 @@ pip install -r requirements.txt
 
 ```bash
 # Reflect images across 4-planes of symmetry
-python mirror.py multi_mirror input.jpg -oi kaleidoscope_0.jpg
+python mirror.py multi_mirror input.jpg -pn 0 -oi kaleidoscope_0.jpg
 
 # Create a kaleidoscope video (360° rotation)
 python mirror.py spin_mirror input.jpg -ov kaleidoscope.mp4
@@ -301,7 +301,7 @@ python mirror.py view samples/Fern.png -fx 0.15 -fy 0.15 -sq -oi Fern_as_sq.png
 ### Simple Mirror
 ```bash
 # Vertical mirror (left-right flip)
-python mirror.py mirror samples/Fern_as_sq.png -fx 0.15 -fy 0.15 -sq -oi Fern_v.png
+python mirror.py mirror Fern_as_sq.png h -oi Fern_v.png
 
 ```
 
@@ -310,7 +310,7 @@ python mirror.py mirror samples/Fern_as_sq.png -fx 0.15 -fy 0.15 -sq -oi Fern_v.
 ### Multi-Mirror
 ```bash
 # Create kaleidoscope pattern with 4 planes of symmetry
-python mirror.py multi_mirror ./examples/Fern_as_sq.png -pn 0 -oi Fern_0.png
+python mirror.py multi_mirror Fern_as_sq.png -pn 0 -oi Fern_0.png
 ```
 
 ![Four plane symmetry Fern.png](./assets/Fern_0.png)
@@ -318,30 +318,11 @@ python mirror.py multi_mirror ./examples/Fern_as_sq.png -pn 0 -oi Fern_0.png
 ### Rotating Multi-Mirror
 ```bash
 # Standard 360° rotation at 30 fps
-python mirror.py spin_mirror sunset.jpg -sq -ov sunset_kaleidoscope.mp4
+python mirror.py spin_mirror Fern_as_sq.png -ov Fern.mp4
 ```
 
-## Features
+![Rotating 4 plane symmetry Fern.mp4](./assets/Fern.gif)
 
-- **Multiple mirror modes:**
-  - Simple mirroring across horizontal, vertical, and diagonal planes
-  - Half-mirror reflection to create single-plane symmetry
-  - Multi-mirror for complex kaleidoscope patterns with 4 planes of symmetry
-  
-- **Kaleidoscope video generation:**
-  - Rotating animations with customizable rotation speed
-  - Adjustable frame rate and video codec
-  - Option to save individual frames
-  
-- **Flexible image processing:**
-  - Automatic center square cropping
-  - Resize by dimensions or scaling factors
-  - Support for various image formats
-  
-- **Customization:**
-  - 8 built-in symmetry permutations
-  - Custom plane combinations
-  - Verbose display of intermediate steps
 
 ## Requirements
 
