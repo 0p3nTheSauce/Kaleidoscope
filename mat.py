@@ -19,6 +19,7 @@ def mir_n_1chan(A):  # negative diagonal
 def mir_p(A):
     return A.transpose(1, 0, 2)[::-1, ::-1, :]
 
+
 @njit(cache=True)
 def mir_n(A):
     return A.transpose(1, 0, 2)

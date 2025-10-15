@@ -9,6 +9,7 @@ import os
 from argparse import ArgumentParser
 from pathlib import Path
 import tkinter as tk
+
 # local
 from mat import mir_p, mir_n
 from rot import spin_func
@@ -20,7 +21,9 @@ CV_FLIP_VERT = 0
 CV_FLIP_HORIZ = 1
 
 
-def crop_square(img: MatLike, ) -> MatLike:
+def crop_square(
+    img: MatLike,
+) -> MatLike:
     """Centre crops the largest square from an image
 
     Args:
@@ -68,6 +71,7 @@ def mirror(img: MatLike, line: int) -> MatLike:
     else:
         raise ValueError(f"Provided: {line} not one of available lines: 0, 1, 2, 3")
 
+
 @njit(cache=True)
 def _project_diag(
     img: MatLike,
@@ -100,53 +104,36 @@ def _project_diag(
     return img
 
 @njit(cache=True)
-def _project_diag_safe(
-    img: MatLike,
+def _project_diag_rev(img: MatLike,
     loc: Literal["top", "bottom"],
     diag: Literal["+", "-"],
-    lpnts: List[int],
-) -> MatLike:
-    """Reflect one half of an image onto the other side (not inplace). This 
-    is the safe version which can be used with non rectangular images.
+    lpnts: List[int]):
+    """Reflect one half of an image onto the other side (not inplace).
 
     Args:
-        img (MatLike): Image (h, w, c)
+        img (MatLike): Image (h, w, c) (square)
         loc (Literal['top', 'bottom']): Location with respect to dividing line.
         diag (Literal['+', '-']): Sign of the diagonal gradient.
 
     Returns:
         MatLike: Image with 1 plane of symmetry.
     """
+    
     h, w, _ = img.shape
-    if diag == "+":
-        mr = mir_p(img)
-    else:
-        mr = mir_n(img)
 
-    mr_cp = mr.copy()
+    cp = img.copy()
+    
+    mr = mir_p(img)
 
-    mw, mh, _ = mr.shape
-    i = 0
-    while mh < w and i < 3:
-        mr = np.hstack((mr, mr_cp[:, :h-w, :]))
-        mw, mh, _ = mr.shape
-        i += 1
-    
-    mr_cp = mr.copy()
-    
-    i = 0
-    while mw < h and i < 3:
-        mr = np.vstack((mr, mr_cp[:h-w, :, :]))
-        mw, mh, _ = mr.shape
-        i += 1
-    
     for x_row in range(h):
         for x_col in range(w):
             y_row = lpnts[x_col]
-            # reflect the loc
             if (loc == "top" and x_row > y_row) or (loc == "bottom" and x_row < y_row):
-                img[x_row, x_col] = mr[x_row, x_col]
-    return img
+                cp[x_row, x_col] = mr[x_col, x_row]
+
+    return cp
+    
+
 
 @njit(cache=True)
 def _project(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
@@ -162,7 +149,7 @@ def _project(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
                     5 - top positive slope,
                     6 - bottom negative slope,
                     7 - top negative slope.
-                    
+
     Returns:
         MatLike: Image with 1 plane of symmetry.
     """
@@ -193,7 +180,10 @@ def _project(img: MatLike, side: int, diagonals: np.ndarray) -> MatLike:
             raise ValueError("Unsupported side code")
     return img
 
-def half_mirror(img: MatLike, side: str, inplace: bool = False, force:bool = False) -> Optional[MatLike]:
+
+def half_mirror(
+    img: MatLike, side: str, inplace: bool = False, force: bool = False
+) -> Optional[MatLike]:
     """
     Reflect one half of an image onto the other side (not inplace)
 
@@ -225,15 +215,15 @@ def half_mirror(img: MatLike, side: str, inplace: bool = False, force:bool = Fal
 
     h, w, _ = img.shape
     snum = side_codes[side]
-    
+
     if h != w and snum > 3:
-        #this is conceptually because when rotating a rectangle around a diagonal by 180 deg, 
-        #the rectangle will not have the same orientation when it started.  In code, this 
-        # manifests in the project_diag function, where the source matrix has different shape 
-        #to the destination. However, njit compiled functions don't perform index checking.
+        # this is conceptually because when rotating a rectangle around a diagonal by 180 deg,
+        # the rectangle will not have the same orientation when it started.  In code, this
+        # manifests in the project_diag function, where the source matrix has different shape
+        # to the destination. However, njit compiled functions don't perform index checking.
         if not force:
             return
-    
+
     diagonals = lines.make_lines(h, w)
     if inplace:
         return _project(img, snum, diagonals)
@@ -243,7 +233,11 @@ def half_mirror(img: MatLike, side: str, inplace: bool = False, force:bool = Fal
 
 
 def multi_mirror(
-    img: MatLike, perm: int = 0, disp: bool = False, comb: Optional[List[str]] = None, force:bool = False
+    img: MatLike,
+    perm: int = 0,
+    disp: bool = False,
+    comb: Optional[List[str]] = None,
+    force: bool = False,
 ) -> Optional[MatLike]:
     """Create one of the 8 possible images produced by applying 4 planes of symmetry.
 
@@ -287,17 +281,16 @@ def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
         img = cv2.imread(img_path)
         img = cv2.resize(img, size)
         img = crop_square(img)
-        
-        
+
         spin_func(img, multi_mirror, wait=1, outfolder=output_dir, index=idx, disp=disp)
         idx += 360
     cv2.destroyAllWindows()
 
+
 def _get_img_in_pars() -> ArgumentParser:
-    
     img_in_parser = ArgumentParser(add_help=False)
     img_in_parser.add_argument("in_img", help="Path to input image")
-    
+
     img_in_parser.add_argument(
         "-sq",
         "--square",
@@ -312,35 +305,73 @@ def _get_img_in_pars() -> ArgumentParser:
         metavar=("WIDTH", "HEIGHT"),
         help="New size as width height (e.g., -ns 1920 1080)",
     )
-    img_in_parser.add_argument(
-        '-as',
-        '--auto_size',
-        action='store_true'
-    )
+    img_in_parser.add_argument("-as", "--auto_size", action="store_true")
     img_in_parser.add_argument(
         "-fx", "--factor_x", type=float, help="Factor to multiply width by (resize)"
     )
     img_in_parser.add_argument(
         "-fy", "--factor_y", type=float, help="Factor to multiply height by (resize)"
     )
-    
-    
+
     img_in_parser.add_argument(
         "-nd", "--no_disp", action="store_true", help="Do not view output"
     )
     img_in_parser.add_argument(
         "-do", "--disp_original", action="store_true", help="View original image"
     )
-   
+
     return img_in_parser
 
+
 def _get_img_ot_pars() -> ArgumentParser:
-     # image out parser
+    # image out parser
     img_out_parser = ArgumentParser(add_help=False)
     img_out_parser.add_argument(
         "-oi", "--out_img", type=str, help="Output path of image. Otherwise don't save"
     )
     return img_out_parser
+
+
+
+def _get_image(args) -> Optional[MatLike]:
+    in_img = Path(args.in_img)
+
+    if not in_img.exists():
+        print(f"{in_img} not found")
+        return
+
+    if not in_img.is_file():  # will need to change when adding all_dir
+        print(f"{in_img} is not a file")
+        return
+
+    img = cv2.imread(str(in_img), cv2.IMREAD_COLOR)
+
+    if args.new_size:
+        img = cv2.resize(img, dsize=tuple(args.new_size))
+    elif args.factor_x or args.factor_y:
+        fx = args.factor_x or 1.0
+        fy = args.factor_y or 1.0
+        img = cv2.resize(img, dsize=None, fx=fx, fy=fy)
+    elif args.auto_size:
+        root = tk.Tk()
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        root.destroy()
+        max_width = int(screen_width * 0.9)
+        max_height = int(screen_height * 0.9)
+        if img.shape[1] > max_width or img.shape[0] > max_height:
+            scale = min(max_width / img.shape[1], max_height / img.shape[0])
+            img = cv2.resize(img, None, fx=scale, fy=scale)
+
+    if args.square:
+        img = crop_square(img)
+
+    if args.disp_original:
+        cv2.imshow("Original", img)
+        cv2.waitKey(0)
+
+    return img
+
 
 def _get_spin_args(spin_parser):
     perm_group = spin_parser.add_mutually_exclusive_group()
@@ -361,10 +392,10 @@ def _get_spin_args(spin_parser):
         help="Custom combination of planes (e.g., lv th tp tn)",
     )
     spin_parser.add_argument(
-        '-f',
-        '--force',
-        action='store_true',
-        help='Force spin_mirror to use rectangular images.'
+        "-f",
+        "--force",
+        action="store_true",
+        help="Force spin_mirror to use rectangular images.",
     )
     spin_parser.add_argument(
         "-it",
@@ -379,6 +410,12 @@ def _get_spin_args(spin_parser):
         type=int,
         help="Degrees to rotate per iteration. Defaults to 1.",
         default=1,
+    )
+    spin_parser.add_argument(
+        '-rt',
+        '--rotations',
+        type=int,
+        help="Number of full rotations (360 * rtns) (Overides iterations)"
     )
     spin_parser.add_argument(
         "-wt",
@@ -424,49 +461,10 @@ def _get_spin_args(spin_parser):
         help="Don't recode the video with FFMPEG",
     )
 
-def _get_image(args):
-    
-    in_img = Path(args.in_img)
 
-    if not in_img.exists():
-        print(f"{in_img} not found")
-        return
-
-    if not in_img.is_file():  # will need to change when adding all_dir
-        print(f"{in_img} is not a file")
-        return
-
-    img = cv2.imread(str(in_img), cv2.IMREAD_COLOR)
-
-    if args.new_size:
-        img = cv2.resize(img, dsize=tuple(args.new_size))
-    elif args.factor_x or args.factor_y:
-        fx = args.factor_x or 1.0
-        fy = args.factor_y or 1.0
-        img = cv2.resize(img, dsize=None, fx=fx, fy=fy)
-    elif args.auto_size:
-        root = tk.Tk()
-        screen_width = root.winfo_screenwidth()
-        screen_height = root.winfo_screenheight()
-        root.destroy() 
-        max_width = int(screen_width * 0.9)
-        max_height = int(screen_height * 0.9)
-        if img.shape[1] > max_width or img.shape[0] > max_height:
-            scale = min(max_width / img.shape[1], max_height / img.shape[0])
-            img = cv2.resize(img, None, fx=scale, fy=scale)
-        
-
-    if args.square:
-        img = crop_square(img)
-
-    if args.disp_original:
-        cv2.imshow("Original", img)
-        cv2.waitKey(0)
-        
-    return img
 
 def _get_multim_args(multim_parser):
-     # Provide either perm_num or comb
+    # Provide either perm_num or comb
     perm_group = multim_parser.add_mutually_exclusive_group(required=True)
     perm_group.add_argument(
         "-pn",
@@ -490,29 +488,29 @@ def _get_multim_args(multim_parser):
         "-dv", "--disp_verbose", help="Display intermediary steps", action="store_true"
     )
     multim_parser.add_argument(
-        '-f',
-        '--force',
-        action='store_true',
-        help='Force multi_mirror to use rectangular images when using diagonals.'
+        "-f",
+        "--force",
+        action="store_true",
+        help="Force multi_mirror to use rectangular images when using diagonals.",
     )
-    
-    
+
+
 def main():
     img_in_parser = _get_img_in_pars()
     img_out_parser = _get_img_ot_pars()
-   
+
     # Main parser
     parser = ArgumentParser(
         "mirror.py",
     )
-    #sub 
+    # sub
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     subparsers.add_parser(
         "view",
         help="Don't apply any mirroring",
-        parents=[img_in_parser, img_out_parser]
+        parents=[img_in_parser, img_out_parser],
     )
-    #Mirror parser
+    # Mirror parser
     mirror_parser = subparsers.add_parser(
         "mirror", help="Mirror a whole image", parents=[img_in_parser, img_out_parser]
     )
@@ -522,14 +520,14 @@ def main():
         "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal)",
         choices=["v", "h", "p", "n"],
     )
-    #Multi-mirror parser
+    # Multi-mirror parser
     multim_parser = subparsers.add_parser(
         "multi_mirror",
         help="Create images with up to 4 planes of symmetry",
         parents=[img_in_parser, img_out_parser],
     )
     _get_multim_args(multim_parser)
-    #Spin parser
+    # Spin parser
     spin_parser = subparsers.add_parser(
         "spin_mirror",
         help="Rotate image while applying multi_mirror (creates kaleidoscope)",
@@ -544,7 +542,7 @@ def main():
     if img is None:
         return
     res = img
-        
+
     if args.command == "mirror":
         dic = {"v": 0, "h": 1, "p": 2, "n": 3}
         res = mirror(img, dic[args.plane])
@@ -553,13 +551,15 @@ def main():
             res = multi_mirror(img, args.disp_verbose, comb=args.comb, force=args.force)
         else:
             res = multi_mirror(img, args.perm_num, args.disp_verbose, force=args.force)
-            
+
         if res is None and args.force is False:
-            print("Warning: non-square images produce undefined behaviour when using diagonals")
-            print('Use [-f] to perform operation or [-sq] to convert to square')
-            
+            print(
+                "Warning: non-square images produce undefined behaviour when using diagonals"
+            )
+            print("Use [-f] to perform operation or [-sq] to convert to square")
+
     if (
-        args.command == 'view'
+        args.command == "view"
         or args.command == "mirror"
         or args.command == "multi_mirror"
     ):
@@ -586,17 +586,23 @@ def main():
             img,
             func,
             iter=args.iterations,
+            rotations=args.rotations,
             deg=args.degrees,
             wait=args.wait,
             index=args.index,
             disp=(not args.no_disp),
             outfolder=out_path,
         )
-        
-        if (len(res_imgs) == 0) and (img.shape[0] != img.shape[1]) and (args.force is False):
-            print("Warning: non-square images produce undefined behaviour when using diagonals")
-            print('Use [-f] to perform operation or [-sq] to convert to square')
-        
+
+        if (
+            (len(res_imgs) == 0)
+            and (img.shape[0] != img.shape[1])
+            and (args.force is False)
+        ):
+            print(
+                "Warning: non-square images produce undefined behaviour when using diagonals"
+            )
+            print("Use [-f] to perform operation or [-sq] to convert to square")
 
         if args.out_vid:
             out_path = images_to_video(
@@ -604,12 +610,11 @@ def main():
             )
             if not args.no_recode:
                 convert_mp4(out_path)
-                
-    elif args.command == 'view':
+
+    elif args.command == "view":
         cv2.imshow("Unchanged", img)
         cv2.waitKey(0)
-        
-        
+
     cv2.destroyAllWindows()
 
 

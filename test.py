@@ -149,7 +149,10 @@ def spin_mirror(img):
     for i in range(10):
         for line in mrs:
             hm = mirror.half_mirror(cp, line)
+            if not hm:
+                return
             cv2.imshow("Half Mirror", hm)
+            
             key = cv2.waitKey(100)
             if key == 27:
                 break
@@ -163,6 +166,8 @@ def spin_mirror2(img):
     for i in range(20):
         for mr in mrs:
             hm = mirror.half_mirror(cp, mr)
+            if not hm:
+                return
             cv2.imshow("Half Mirror", hm)
             key = cv2.waitKey(100)
             if key == 27:
@@ -192,6 +197,8 @@ def test_half_mirror(desired_h:int=500):
     #     cv2.imshow("Half mirrored", hm)
     #     cv2.waitKey(0)
     hm = mirror.half_mirror(img, side_codes[6])
+    if not hm:
+        return
     cv2.imshow("half mirror", hm) 
     cv2.imwrite("halfmirror2.png", hm)
     cv2.waitKey(0)
@@ -202,6 +209,8 @@ def multi_mirror_old(img, mrs=["th", "rv", "tp", "tn"], disp=False) -> MatLike:
     hm = img.copy()
     for line in mrs:
         hm = mirror.half_mirror(hm, line)
+        if not hm:
+                return #type:ignore 
         if disp:
             cv2.imshow("Half Mirror", hm)
             cv2.waitKey(0)
@@ -347,7 +356,21 @@ def test_mirs():
     cv2.imshow("mir_n1chan", mirn2)
     cv2.waitKey(0)
 
+def test_project_diag_rev():
+    img = _get_ex_img()
+    # img = test_crop()
+    print(img.shape)
 
+    h, w, _ = img.shape
+    diagonals = lines.make_lines(h, w)
+    pdiag = diagonals[0]
+    ndiag = diagonals[1]
+    img = mirror._project_diag_rev(img,"top", "-" , pdiag)
+    print(img.shape)
+    cv2.imshow('rev', img)
+    cv2.waitKey(0)
+    
+    
 if __name__ == '__main__':
     # test_make_horiz()
     # test_remove_horiz()
@@ -356,10 +379,12 @@ if __name__ == '__main__':
     # test_pd1c()
     # test_p1c(int(sys.argv[1]))
     # test_remove_diag_p()
-    test_half_mirror()
+    # test_half_mirror()
     # test_spin_mirror2(1500)
     # test_multi_mirror2(1500)
     # test_mirs()
+    
+    test_project_diag_rev()
     
     cv2.destroyAllWindows()
         
