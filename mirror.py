@@ -77,7 +77,7 @@ def _project_diag(
     """Reflect one half of an image onto the other side (not inplace).
 
     Args:
-        img (MatLike): Image (h, w, c)
+        img (MatLike): Image (h, w, c) (square)
         loc (Literal['top', 'bottom']): Location with respect to dividing line.
         diag (Literal['+', '-']): Sign of the diagonal gradient.
 
@@ -229,10 +229,7 @@ def half_mirror(img: MatLike, side: str, inplace: bool = False, force:bool = Fal
         #this is conceptually because when rotating a rectangle around a diagonal by 180 deg, 
         #the rectangle will not have the same orientation when it started.  In code, this 
         # manifests in the project_diag function, where the source matrix has different shape 
-        #to the destination. For some reason instead of throwing an index out of bounds error,
-        # crashing, it seems to be reading from adjacent memory locations (probably a result of 
-        # njit)
-        print("Warning: non-square images produce undefined behaviour when using diagonals")
+        #to the destination. However, njit compiled functions don't perform index checking.
         if not force:
             return
     
@@ -409,12 +406,13 @@ def main():
         help="Rotate image while applying multi-mirror (creates kaleidoscope)",
         parents=[img_in_parser],
     )
-    perm_group = spin_parser.add_mutually_exclusive_group(required=True)
+    perm_group = spin_parser.add_mutually_exclusive_group()
     perm_group.add_argument(
         "-pn",
         "--perm_num",
         type=int,
         choices=range(8),
+        default=0,
         help="Permutation of operations [0-7].",
     )
     perm_group.add_argument(
@@ -540,9 +538,9 @@ def main():
             res = multi_mirror(img, args.perm_num, args.disp_verbose, force=args.force)
             
         if res is None and args.force is False:
-            print('Use [-f] to perform operation ')
+            print("Warning: non-square images produce undefined behaviour when using diagonals")
+            print('Use [-f] to perform operation or [-sq] to convert to square')
             
-
     if (
         args.command == "mirror"
         or args.command == "multi_mirror"
@@ -576,6 +574,11 @@ def main():
             disp=(not args.no_disp),
             outfolder=out_path,
         )
+        
+        if (len(res_imgs) == 0) and (img.shape[0] != img.shape[1]) and (args.force is False):
+            print("Warning: non-square images produce undefined behaviour when using diagonals")
+            print('Use [-f] to perform operation or [-sq] to convert to square')
+        
 
         if args.out_vid:
             out_path = images_to_video(

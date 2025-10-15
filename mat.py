@@ -23,10 +23,6 @@ def mir_p(A):
 def mir_n(A):
     return A.transpose(1, 0, 2)
 
-
-
-
-
 if __name__ == "__main__":
     # Define two matrices
     A = np.array([[1, 2, 0], [4, 0, 0], [0, 0, 0]])
