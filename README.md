@@ -293,27 +293,27 @@ options:
 
 ```bash
 #resize and crop square
-python mirror.py view examples/Fern.png -fx 0.15 -fy 0.15 -sq -oi examples/Fern_as_sq.png
+python mirror.py view samples/Fern.png -fx 0.15 -fy 0.15 -sq -oi Fern_as_sq.png
 ```
 
-![Auto-sized and square cropped Fern.png](./examples/Fern_as_sq.png)
+![Auto-sized and square cropped Fern.png](./assets/Fern_as_sq.png)
 
 ### Simple Mirror
 ```bash
 # Vertical mirror (left-right flip)
-python mirror.py mirror ./examples/Fern_as_sq.png v -oi ./examples/Fern_v.png
+python mirror.py mirror samples/Fern_as_sq.png -fx 0.15 -fy 0.15 -sq -oi Fern_v.png
 
 ```
 
-![Horizontally flipped Fern.png](./examples/Fern_h.png)
+![Horizontally flipped Fern.png](./assets/Fern_h.png)
 
 ### Multi-Mirror
 ```bash
 # Create kaleidoscope pattern with 4 planes of symmetry
-python mirror.py multi_mirror ./examples/Fern_as_sq.png -pn 0 -oi ./examples/Fern_0.png
+python mirror.py multi_mirror ./examples/Fern_as_sq.png -pn 0 -oi Fern_0.png
 ```
 
-![Four plane symmetry Fern.png](./examples/Fern_0.png)
+![Four plane symmetry Fern.png](./assets/Fern_0.png)
 
 ### Rotating Multi-Mirror
 ```bash

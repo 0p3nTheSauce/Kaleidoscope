@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import cv2
 from cv2.typing import MatLike
 from typing import List, Literal, Optional
@@ -341,72 +342,7 @@ def _get_img_ot_pars() -> ArgumentParser:
     )
     return img_out_parser
 
-def main():
-    img_in_parser = _get_img_in_pars()
-    img_out_parser = _get_img_ot_pars()
-   
-    # Main parser
-    parser = ArgumentParser(
-        "mirror.py",
-    )
-    
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-    
-    subparsers.add_parser(
-        "view",
-        help="Don't apply any mirroring",
-        parents=[img_in_parser, img_out_parser]
-    )
-    
-    mirror_parser = subparsers.add_parser(
-        "mirror", help="Mirror a whole image", parents=[img_in_parser, img_out_parser]
-    )
-    mirror_parser.add_argument(
-        "plane",
-        help="Mirror about this plane of symmetry: "
-        "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal)",
-        choices=["v", "h", "p", "n"],
-    )
-    multim_parser = subparsers.add_parser(
-        "multi_mirror",
-        help="Create images with up to 4 planes of symmetry",
-        parents=[img_in_parser, img_out_parser],
-    )
-    # Provide either perm_num or comb
-    perm_group = multim_parser.add_mutually_exclusive_group(required=True)
-    perm_group.add_argument(
-        "-pn",
-        "--perm_num",
-        type=int,
-        choices=range(8),
-        help="Permutation of operations [0-7].",
-    )
-    perm_group.add_argument(
-        "-cb",
-        "--comb",
-        type=str,
-        nargs="+",
-        choices=["th", "bh", "lv", "rv", "tp", "bp", "tn", "bn"],
-        metavar="SIDE+PLANE",
-        help="Side to reflect + plane of symmetry (e.g. th). "
-        "Sides: t/b/l/r (top/bottom/left/right). "
-        "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal). ",
-    )
-    multim_parser.add_argument(
-        "-dv", "--disp_verbose", help="Display intermediary steps", action="store_true"
-    )
-    multim_parser.add_argument(
-        '-f',
-        '--force',
-        action='store_true',
-        help='Force multi_mirror to use rectangular images when using diagonals.'
-    )
-    #Spin parser
-    spin_parser = subparsers.add_parser(
-        "spin_mirror",
-        help="Rotate image while applying multi_mirror (creates kaleidoscope)",
-        parents=[img_in_parser],
-    )
+def _get_spin_args(spin_parser):
     perm_group = spin_parser.add_mutually_exclusive_group()
     perm_group.add_argument(
         "-pn",
@@ -488,8 +424,8 @@ def main():
         help="Don't recode the video with FFMPEG",
     )
 
-    args = parser.parse_args()
-
+def _get_image(args):
+    
     in_img = Path(args.in_img)
 
     if not in_img.exists():
@@ -526,7 +462,87 @@ def main():
     if args.disp_original:
         cv2.imshow("Original", img)
         cv2.waitKey(0)
+        
+    return img
 
+def _get_multim_args(multim_parser):
+     # Provide either perm_num or comb
+    perm_group = multim_parser.add_mutually_exclusive_group(required=True)
+    perm_group.add_argument(
+        "-pn",
+        "--perm_num",
+        type=int,
+        choices=range(8),
+        help="Permutation of operations [0-7].",
+    )
+    perm_group.add_argument(
+        "-cb",
+        "--comb",
+        type=str,
+        nargs="+",
+        choices=["th", "bh", "lv", "rv", "tp", "bp", "tn", "bn"],
+        metavar="SIDE+PLANE",
+        help="Side to reflect + plane of symmetry (e.g. th). "
+        "Sides: t/b/l/r (top/bottom/left/right). "
+        "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal). ",
+    )
+    multim_parser.add_argument(
+        "-dv", "--disp_verbose", help="Display intermediary steps", action="store_true"
+    )
+    multim_parser.add_argument(
+        '-f',
+        '--force',
+        action='store_true',
+        help='Force multi_mirror to use rectangular images when using diagonals.'
+    )
+    
+    
+def main():
+    img_in_parser = _get_img_in_pars()
+    img_out_parser = _get_img_ot_pars()
+   
+    # Main parser
+    parser = ArgumentParser(
+        "mirror.py",
+    )
+    #sub 
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    subparsers.add_parser(
+        "view",
+        help="Don't apply any mirroring",
+        parents=[img_in_parser, img_out_parser]
+    )
+    #Mirror parser
+    mirror_parser = subparsers.add_parser(
+        "mirror", help="Mirror a whole image", parents=[img_in_parser, img_out_parser]
+    )
+    mirror_parser.add_argument(
+        "plane",
+        help="Mirror about this plane of symmetry: "
+        "Planes: h/v/p/n (horizontal/vertical/+diagonal/-diagonal)",
+        choices=["v", "h", "p", "n"],
+    )
+    #Multi-mirror parser
+    multim_parser = subparsers.add_parser(
+        "multi_mirror",
+        help="Create images with up to 4 planes of symmetry",
+        parents=[img_in_parser, img_out_parser],
+    )
+    _get_multim_args(multim_parser)
+    #Spin parser
+    spin_parser = subparsers.add_parser(
+        "spin_mirror",
+        help="Rotate image while applying multi_mirror (creates kaleidoscope)",
+        parents=[img_in_parser],
+    )
+    _get_spin_args(spin_parser)
+
+    args = parser.parse_args()
+
+    img = _get_image(args)
+
+    if img is None:
+        return
     res = img
         
     if args.command == "mirror":

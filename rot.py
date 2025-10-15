@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import cv2
 from cv2.typing import MatLike
-from typing import Callable, Optional, List
+from typing import Callable, Optional, List, Tuple
 import os
+from pathlib import Path
 
 def rotate(img: MatLike, angle: float) -> MatLike:
     """Shorthand for cv2.getRotationMatrix2D followed by cv2.warpAffine. Rotates
@@ -32,6 +33,9 @@ def spin(img: MatLike):
         cv2.imshow("Rotated", rot)
         cv2.waitKey(50)
     cv2.destroyAllWindows()
+
+
+
 
 def spin_func(
     img: MatLike,
@@ -87,3 +91,12 @@ def spin_func(
         
     return frames
 
+def cycle(img: MatLike, args, func: Callable[[MatLike], Optional[MatLike]]):
+    all_imgs = []
+    for i in range(8):
+        all_imgs.extend(spin_func(img, func, *args))
+    return all_imgs        
+
+    
+        
+    
