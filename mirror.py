@@ -279,6 +279,9 @@ def all_dir(input_dir, output_dir, size=(1920, 1080), disp=False):
     for f in os.listdir(input_dir):
         img_path = os.path.join(input_dir, f)
         img = cv2.imread(img_path)
+        if img is None:
+            print(f"Failed to load {img_path}")
+            break
         img = cv2.resize(img, size)
         img = crop_square(img)
 
@@ -345,6 +348,10 @@ def _get_image(args) -> Optional[MatLike]:
         return
 
     img = cv2.imread(str(in_img), cv2.IMREAD_COLOR)
+
+    if not img:
+        print(f"Failed to load {in_img}")
+        return
 
     if args.new_size:
         img = cv2.resize(img, dsize=tuple(args.new_size))
