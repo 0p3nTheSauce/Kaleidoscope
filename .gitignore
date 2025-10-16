@@ -13,3 +13,4 @@ mirror_dump
 .venv/
 media/*
 !assets/*
+.vscode/
